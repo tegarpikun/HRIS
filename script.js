@@ -4,7 +4,7 @@
  */
 
 // 1. KONFIGURASI
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxzEc0DwxyGMzNdj2aQvlOtq-oumn4wECa_zeXLV67pUdov-sPxzw92egfxDd7wHhih/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz_c6lMPZJhZIJpiKEeJuUJKN4SQb9Gz--XUPaqjzzINuY2VczYJ3sTb_uIrlVtXENd/exec";
 let currentUser = JSON.parse(localStorage.getItem('hris_user')) || null;
 
 // 2. SISTEM PELUNCUR
