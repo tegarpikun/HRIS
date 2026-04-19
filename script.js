@@ -58,9 +58,13 @@ function renderMainShell() {
             </main>
     </div>`;
     lucide.createIcons();
+    
+    // Set dashboard as active on first load
+    const firstBtn = document.querySelector('.nav-link');
+    if(firstBtn) setActiveNav(firstBtn);
 }
 
-function renderNavButton(label, icon, func, isActive = false) {
+function renderNavButton(label, icon, func) {
     return `
     <button onclick="${func}; setActiveNav(this)" class="nav-link flex items-center gap-3 w-full px-4 py-3 rounded-xl transition text-sm font-medium text-slate-600 hover:bg-slate-100">
         <i data-lucide="${icon}" class="w-5 h-5"></i> ${label}
@@ -68,8 +72,14 @@ function renderNavButton(label, icon, func, isActive = false) {
 }
 
 function setActiveNav(el) {
-    document.querySelectorAll('.nav-link').forEach(btn => btn.classList.remove('bg-indigo-600', 'text-white', 'shadow-md'));
+    // Reset semua tombol ke state normal
+    document.querySelectorAll('.nav-link').forEach(btn => {
+        btn.classList.remove('bg-indigo-600', 'text-white', 'shadow-md');
+        btn.classList.add('text-slate-600', 'hover:bg-slate-100');
+    });
+    // Aktifkan tombol yang diklik
     el.classList.add('bg-indigo-600', 'text-white', 'shadow-md');
+    el.classList.remove('text-slate-600', 'hover:bg-slate-100');
 }
 
 // --- 4. MODUL-MODUL FITUR ---
@@ -100,7 +110,7 @@ function showDashboard() {
     </div>`;
 }
 
-// B. DAILY TASK (BARU)
+// B. DAILY TASK
 function showDailyTask() {
     const area = document.getElementById('content-area');
     area.innerHTML = `
@@ -172,6 +182,30 @@ function showAbsensi() {
     lucide.createIcons();
 }
 
+async function prosesAbsen(tipe) {
+    if (!navigator.geolocation) return alert("GPS mati!");
+    showToast(`Mengunci lokasi untuk absen ${tipe}...`);
+    
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+        const payload = {
+            action: 'presensi',
+            username: currentUser.username,
+            status: tipe,
+            lat: pos.coords.latitude,
+            long: pos.coords.longitude
+        };
+
+        try {
+            await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload), redirect: "follow" });
+            showToast(`Berhasil! Absen ${tipe} tercatat.`);
+        } catch (e) {
+            showToast("Error mengirim data.");
+        }
+    }, (err) => {
+        alert("Gagal mendapatkan lokasi. Pastikan izin GPS diberikan.");
+    });
+}
+
 // D. PAYROLL & PPh21
 async function showPayroll() {
     const area = document.getElementById('content-area');
@@ -214,6 +248,55 @@ async function showPayroll() {
     }
 }
 
+// --- FUNGSI PENAMPUNG (UNTUK MENU YANG BELUM DIBUAT) ---
+function showCuti() {
+    document.getElementById('content-area').innerHTML = `
+    <div class="bg-white p-12 rounded-[40px] border border-slate-200 text-center">
+        <div class="w-20 h-20 bg-orange-50 text-orange-500 rounded-3xl flex items-center justify-center mx-auto mb-6">
+            <i data-lucide="calendar-days" class="w-10 h-10"></i>
+        </div>
+        <h2 class="text-2xl font-bold text-slate-800">Pengajuan Cuti</h2>
+        <p class="text-slate-500 mt-2">Modul ini sedang dalam tahap pengembangan.</p>
+    </div>`;
+    lucide.createIcons();
+}
+
+function showAset() {
+    document.getElementById('content-area').innerHTML = `
+    <div class="bg-white p-12 rounded-[40px] border border-slate-200 text-center">
+        <div class="w-20 h-20 bg-blue-50 text-blue-500 rounded-3xl flex items-center justify-center mx-auto mb-6">
+            <i data-lucide="package" class="w-10 h-10"></i>
+        </div>
+        <h2 class="text-2xl font-bold text-slate-800">Aset Kantor</h2>
+        <p class="text-slate-500 mt-2">Modul inventaris aset akan segera tersedia.</p>
+    </div>`;
+    lucide.createIcons();
+}
+
+function showKPI() {
+    document.getElementById('content-area').innerHTML = `
+    <div class="bg-white p-12 rounded-[40px] border border-slate-200 text-center">
+        <div class="w-20 h-20 bg-purple-50 text-purple-500 rounded-3xl flex items-center justify-center mx-auto mb-6">
+            <i data-lucide="bar-chart-3" class="w-10 h-10"></i>
+        </div>
+        <h2 class="text-2xl font-bold text-slate-800">Evaluasi KPI</h2>
+        <p class="text-slate-500 mt-2">Modul penilaian kinerja sedang disiapkan.</p>
+    </div>`;
+    lucide.createIcons();
+}
+
+function showRecruitment() {
+    document.getElementById('content-area').innerHTML = `
+    <div class="bg-white p-12 rounded-[40px] border border-slate-200 text-center">
+        <div class="w-20 h-20 bg-emerald-50 text-emerald-500 rounded-3xl flex items-center justify-center mx-auto mb-6">
+            <i data-lucide="user-plus" class="w-10 h-10"></i>
+        </div>
+        <h2 class="text-2xl font-bold text-slate-800">Rekrutmen</h2>
+        <p class="text-slate-500 mt-2">Sistem manajemen kandidat segera hadir.</p>
+    </div>`;
+    lucide.createIcons();
+}
+
 // --- 5. LOGIKA SISTEM (LOGIN, GPS, TOAST) ---
 
 async function handleLogin(e) {
@@ -245,28 +328,6 @@ async function handleLogin(e) {
     }
 }
 
-async function prosesAbsen(tipe) {
-    if (!navigator.geolocation) return alert("GPS mati!");
-    showToast(`Mengunci lokasi untuk absen ${tipe}...`);
-    
-    navigator.geolocation.getCurrentPosition(async (pos) => {
-        const payload = {
-            action: 'presensi',
-            username: currentUser.username,
-            status: tipe,
-            lat: pos.coords.latitude,
-            long: pos.coords.longitude
-        };
-
-        try {
-            await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload), redirect: "follow" });
-            showToast(`Berhasil! Absen ${tipe} tercatat.`);
-        } catch (e) {
-            showToast("Error mengirim data.");
-        }
-    });
-}
-
 function showToast(msg) {
     let container = document.getElementById('toast-box');
     if (!container) {
@@ -286,7 +347,7 @@ function renderLogin() {
     const main = document.getElementById('main-content');
     main.innerHTML = `
     <div class="min-h-screen flex items-center justify-center bg-slate-100 p-6 font-jakarta">
-        <div class="bg-white p-10 rounded-[48px] shadow-2xl w-full max-w-md border border-white">
+        <div class="bg-white p-10 rounded-[48px] shadow-2xl w-full max-w-md border border-white text-center">
             <div class="text-center mb-10">
                 <div class="w-20 h-20 bg-indigo-600 rounded-[28px] flex items-center justify-center mx-auto mb-6 shadow-xl shadow-indigo-200">
                     <i data-lucide="fingerprint" class="text-white w-10 h-10"></i>
@@ -295,8 +356,8 @@ function renderLogin() {
                 <p class="text-slate-400 mt-2 font-medium">Sistem Informasi Karyawan</p>
             </div>
             <form onsubmit="handleLogin(event)" class="space-y-5">
-                <input type="text" id="login-username" placeholder="Username" class="w-full p-5 bg-slate-50 border border-slate-100 rounded-3xl outline-none focus:ring-4 focus:ring-indigo-500/10 transition" required>
-                <input type="password" id="login-password" placeholder="Password" class="w-full p-5 bg-slate-50 border border-slate-100 rounded-3xl outline-none focus:ring-4 focus:ring-indigo-500/10 transition" required>
+                <input type="text" id="login-username" placeholder="Username" class="w-full p-5 bg-slate-50 border border-slate-100 rounded-3xl outline-none focus:ring-4 focus:ring-indigo-500/10 transition text-left" required>
+                <input type="password" id="login-password" placeholder="Password" class="w-full p-5 bg-slate-50 border border-slate-100 rounded-3xl outline-none focus:ring-4 focus:ring-indigo-500/10 transition text-left" required>
                 <button type="submit" class="w-full bg-indigo-600 text-white py-5 rounded-3xl font-bold text-lg hover:bg-indigo-700 hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-indigo-100">
                     Masuk Sekarang
                 </button>
