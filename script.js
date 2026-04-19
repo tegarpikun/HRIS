@@ -4,7 +4,7 @@
  */
 
 // 1. KONFIGURASI & VARIABEL GLOBAL
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxye8gRI0rgICqCm71_Jr8TN6KEnpAetjCiJ_Bpl3OOP9Oo88wF5zO1EZUMWK8El21q/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzRrxtKbhTk2u0OizhOLZZ_SPrZ-LiykhrrwtKWAWpiqGWLXRqbAlb7aZT75W58kKc/exec";
 let currentUser = JSON.parse(localStorage.getItem('hris_user')) || null;
 let activeTab = 'dashboard';
 
