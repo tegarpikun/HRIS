@@ -1,0 +1,1460 @@
+<!doctype html>
+<html lang="id" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HRIS Dashboard</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet">
+  <script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: { jakarta: ['Plus Jakarta Sans', 'sans-serif'] }
+    }
+  }
+}
+</script>
+  <style>
+html, body { height: 100%; margin: 0; }
+body { font-family: 'Plus Jakarta Sans', sans-serif; }
+.sidebar-item { transition: all 0.2s; }
+.sidebar-item:hover, .sidebar-item.active { background: rgba(255,255,255,0.1); }
+.card-hover { transition: transform 0.2s, box-shadow 0.2s; }
+.card-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+.fade-in { animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+.modal-overlay { background: rgba(0,0,0,0.5); }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+.stat-gradient-1 { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+.stat-gradient-2 { background: linear-gradient(135deg, #06b6d4, #0ea5e9); }
+.stat-gradient-3 { background: linear-gradient(135deg, #f59e0b, #f97316); }
+.stat-gradient-4 { background: linear-gradient(135deg, #10b981, #34d399); }
+.progress-bar { transition: width 0.8s ease; }
+input:focus, select:focus, textarea:focus { outline: none; box-shadow: 0 0 0 2px #6366f1; }
+</style>
+  <style>body { box-sizing: border-box; }</style>
+ </head>
+ <body class="h-full bg-slate-50">
+  <div id="app" class="h-full w-full flex overflow-hidden hidden">
+   <!-- Sidebar -->
+   <aside id="sidebar" class="w-64 bg-slate-900 text-white flex-shrink-0 flex flex-col h-full overflow-y-auto">
+    <div class="p-5 border-b border-slate-700">
+     <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-lg bg-indigo-500 flex items-center justify-center font-bold text-sm">
+       HR
+      </div>
+      <div>
+       <div id="sidebar-title" class="font-bold text-sm">
+        HRIS Pro
+       </div>
+       <div id="sidebar-company" class="text-xs text-slate-400">
+        PT Perusahaan Anda
+       </div>
+      </div>
+     </div>
+    </div>
+    <nav class="flex-1 p-3 space-y-1" id="nav-menu">
+     <button onclick="navigate('dashboard')" data-nav="dashboard" class="sidebar-item active w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left"> <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard </button> <button onclick="navigate('employees')" data-nav="employees" class="sidebar-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left"> <i data-lucide="users" class="w-4 h-4"></i> Database Karyawan </button> <button onclick="navigate('organization')" data-nav="organization" class="sidebar-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left"> <i data-lucide="building" class="w-4 h-4"></i> Organisasi </button> <button onclick="navigate('attendance')" data-nav="attendance" class="sidebar-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left"> <i data-lucide="clock" class="w-4 h-4"></i> Kehadiran </button> <button onclick="navigate('leave')" data-nav="leave" class="sidebar-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left"> <i data-lucide="calendar" class="w-4 h-4"></i> Cuti &amp; Lembur </button> <button onclick="navigate('payroll')" data-nav="payroll" class="sidebar-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left"> <i data-lucide="wallet" class="w-4 h-4"></i> Penggajian </button> <button onclick="navigate('recruitment')" data-nav="recruitment" class="sidebar-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left"> <i data-lucide="user-plus" class="w-4 h-4"></i> Rekrutmen </button> <button onclick="navigate('performance')" data-nav="performance" class="sidebar-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left"> <i data-lucide="target" class="w-4 h-4"></i> Kinerja </button> <button onclick="navigate('learning')" data-nav="learning" class="sidebar-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left"> <i data-lucide="book-open" class="w-4 h-4"></i> Pelatihan </button> <button onclick="navigate('analytics')" data-nav="analytics" class="sidebar-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left"> <i data-lucide="bar-chart-3" class="w-4 h-4"></i> Analitik </button> <button onclick="navigate('assets')" data-nav="assets" class="sidebar-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left"> <i data-lucide="laptop" class="w-4 h-4"></i> Aset </button>
+    </nav>
+    <div class="p-3 border-t border-slate-700">
+     <div class="flex items-center gap-3 px-3 py-2">
+      <div class="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-xs font-bold">
+       AD
+      </div>
+      <div class="text-sm">
+       <div class="font-medium">
+        Admin HR
+       </div>
+       <div class="text-xs text-slate-400">
+        Super Admin
+       </div>
+      </div>
+     </div>
+    </div>
+   </aside><!-- Main Content -->
+   <main class="flex-1 h-full overflow-y-auto" id="main-content">
+    <!-- Top Bar -->
+    <header class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between sticky top-0 z-10">
+     <div>
+      <h1 id="page-title" class="text-lg font-bold text-slate-800">Dashboard</h1>
+      <p id="page-subtitle" class="text-xs text-slate-500">Selamat datang kembali, Admin</p>
+     </div>
+     <div class="flex items-center gap-3">
+      <div class="relative">
+       <input type="text" placeholder="Cari..." class="text-sm border border-slate-200 rounded-lg pl-9 pr-4 py-2 w-56 bg-slate-50"> <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+      </div><button class="relative p-2 rounded-lg hover:bg-slate-100"><i data-lucide="bell" class="w-5 h-5 text-slate-600"></i><span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span></button><button onclick="openProfileModal()" class="p-2 rounded-lg hover:bg-slate-100"><i data-lucide="user" class="w-5 h-5 text-slate-600"></i></button><button onclick="openProfileModal()" class="p-2 rounded-lg hover:bg-slate-100"><i data-lucide="user" class="w-5 h-5 text-slate-600"></i></button>
+     </div>
+    </header><!-- Page Container -->
+    <div class="p-6" id="page-container">
+     <!-- Dashboard Page -->
+     <div id="page-dashboard" class="page fade-in">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+       <div class="stat-gradient-1 rounded-xl p-5 text-white card-hover">
+        <div class="flex justify-between items-start">
+         <div>
+          <p class="text-xs opacity-80">Total Karyawan</p>
+          <p id="stat-total" class="text-2xl font-bold mt-1">0</p>
+         </div><i data-lucide="users" class="w-8 h-8 opacity-60"></i>
+        </div>
+        <p class="text-xs mt-3 opacity-70">Aktif &amp; terdaftar</p>
+       </div>
+       <div class="stat-gradient-2 rounded-xl p-5 text-white card-hover">
+        <div class="flex justify-between items-start">
+         <div>
+          <p class="text-xs opacity-80">Hadir Hari Ini</p>
+          <p id="stat-present" class="text-2xl font-bold mt-1">0</p>
+         </div><i data-lucide="check-circle" class="w-8 h-8 opacity-60"></i>
+        </div>
+        <p class="text-xs mt-3 opacity-70">Dari total karyawan</p>
+       </div>
+       <div class="stat-gradient-3 rounded-xl p-5 text-white card-hover">
+        <div class="flex justify-between items-start">
+         <div>
+          <p class="text-xs opacity-80">Pengajuan Cuti</p>
+          <p id="stat-leave" class="text-2xl font-bold mt-1">0</p>
+         </div><i data-lucide="calendar-off" class="w-8 h-8 opacity-60"></i>
+        </div>
+        <p class="text-xs mt-3 opacity-70">Menunggu persetujuan</p>
+       </div>
+       <div class="stat-gradient-4 rounded-xl p-5 text-white card-hover">
+        <div class="flex justify-between items-start">
+         <div>
+          <p class="text-xs opacity-80">Lowongan Aktif</p>
+          <p id="stat-jobs" class="text-2xl font-bold mt-1">0</p>
+         </div><i data-lucide="briefcase" class="w-8 h-8 opacity-60"></i>
+        </div>
+        <p class="text-xs mt-3 opacity-70">Posisi terbuka</p>
+       </div>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+       <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-5">
+        <h3 class="font-semibold text-slate-800 mb-4">Komposisi Departemen</h3>
+        <div id="dept-chart" class="space-y-3"></div>
+        <p id="dept-empty" class="text-sm text-slate-400 text-center py-8">Tambahkan karyawan untuk melihat komposisi departemen</p>
+       </div>
+       <div class="bg-white rounded-xl border border-slate-200 p-5">
+        <h3 class="font-semibold text-slate-800 mb-4">Aktivitas Terkini</h3>
+        <div id="recent-activity" class="space-y-3">
+         <p class="text-sm text-slate-400 text-center py-8">Belum ada aktivitas</p>
+        </div>
+       </div>
+      </div>
+     </div><!-- Employees Page -->
+     <div id="page-employees" class="page fade-in hidden">
+      <div class="flex items-center justify-between mb-5">
+       <div>
+        <h2 class="text-base font-semibold text-slate-800">Database Karyawan</h2>
+        <p class="text-xs text-slate-500">Kelola seluruh data karyawan</p>
+       </div><button onclick="openEmployeeModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-4 py-2 rounded-lg flex items-center gap-2"><i data-lucide="plus" class="w-4 h-4"></i> Tambah Karyawan</button>
+      </div>
+      <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+       <div class="p-4 border-b border-slate-100 flex gap-3">
+        <input type="text" id="emp-search" oninput="filterEmployees()" placeholder="Cari nama atau posisi..." class="text-sm border border-slate-200 rounded-lg px-3 py-2 flex-1 bg-slate-50"> <select id="emp-dept-filter" onchange="filterEmployees()" class="text-sm border border-slate-200 rounded-lg px-3 py-2 bg-slate-50"> <option value="">Semua Departemen</option> <option>Engineering</option><option>HR</option><option>Finance</option><option>Marketing</option><option>Operations</option><option>Sales</option> </select>
+       </div>
+       <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+         <thead class="bg-slate-50 text-slate-600">
+          <tr>
+           <th class="text-left px-4 py-3 font-medium">Nama</th>
+           <th class="text-left px-4 py-3 font-medium">Departemen</th>
+           <th class="text-left px-4 py-3 font-medium">Posisi</th>
+           <th class="text-left px-4 py-3 font-medium">Status</th>
+           <th class="text-left px-4 py-3 font-medium">Tgl Masuk</th>
+           <th class="text-left px-4 py-3 font-medium">Aksi</th>
+          </tr>
+         </thead>
+         <tbody id="emp-table-body">
+          <tr>
+           <td colspan="6" class="text-center py-8 text-slate-400">Belum ada data karyawan</td>
+          </tr>
+         </tbody>
+        </table>
+       </div>
+      </div>
+     </div><!-- Organization Page -->
+     <div id="page-organization" class="page fade-in hidden">
+      <h2 class="text-base font-semibold text-slate-800 mb-1">Struktur Organisasi</h2>
+      <p class="text-xs text-slate-500 mb-5">Manajemen divisi &amp; posisi</p>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="org-cards">
+       <div class="bg-white rounded-xl border border-slate-200 p-5 text-center">
+        <div class="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center mx-auto mb-3"><i data-lucide="building" class="w-6 h-6 text-indigo-600"></i>
+        </div>
+        <h4 class="font-semibold text-slate-800">Engineering</h4>
+        <p class="text-xs text-slate-500 mt-1" id="org-engineering">0 karyawan</p>
+        <div class="mt-3 space-y-1 text-xs text-slate-600">
+         <p>• Software Engineer</p>
+         <p>• DevOps Engineer</p>
+         <p>• QA Engineer</p>
+        </div>
+       </div>
+       <div class="bg-white rounded-xl border border-slate-200 p-5 text-center">
+        <div class="w-12 h-12 rounded-full bg-cyan-100 flex items-center justify-center mx-auto mb-3"><i data-lucide="users" class="w-6 h-6 text-cyan-600"></i>
+        </div>
+        <h4 class="font-semibold text-slate-800">HR &amp; GA</h4>
+        <p class="text-xs text-slate-500 mt-1" id="org-hr">0 karyawan</p>
+        <div class="mt-3 space-y-1 text-xs text-slate-600">
+         <p>• HR Manager</p>
+         <p>• Recruiter</p>
+         <p>• GA Staff</p>
+        </div>
+       </div>
+       <div class="bg-white rounded-xl border border-slate-200 p-5 text-center">
+        <div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-3"><i data-lucide="wallet" class="w-6 h-6 text-amber-600"></i>
+        </div>
+        <h4 class="font-semibold text-slate-800">Finance</h4>
+        <p class="text-xs text-slate-500 mt-1" id="org-finance">0 karyawan</p>
+        <div class="mt-3 space-y-1 text-xs text-slate-600">
+         <p>• Finance Manager</p>
+         <p>• Accountant</p>
+         <p>• Tax Staff</p>
+        </div>
+       </div>
+       <div class="bg-white rounded-xl border border-slate-200 p-5 text-center">
+        <div class="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-3"><i data-lucide="megaphone" class="w-6 h-6 text-emerald-600"></i>
+        </div>
+        <h4 class="font-semibold text-slate-800">Marketing</h4>
+        <p class="text-xs text-slate-500 mt-1" id="org-marketing">0 karyawan</p>
+        <div class="mt-3 space-y-1 text-xs text-slate-600">
+         <p>• Marketing Manager</p>
+         <p>• Content Creator</p>
+         <p>• SEO Specialist</p>
+        </div>
+       </div>
+       <div class="bg-white rounded-xl border border-slate-200 p-5 text-center">
+        <div class="w-12 h-12 rounded-full bg-rose-100 flex items-center justify-center mx-auto mb-3"><i data-lucide="settings" class="w-6 h-6 text-rose-600"></i>
+        </div>
+        <h4 class="font-semibold text-slate-800">Operations</h4>
+        <p class="text-xs text-slate-500 mt-1" id="org-operations">0 karyawan</p>
+        <div class="mt-3 space-y-1 text-xs text-slate-600">
+         <p>• Operations Manager</p>
+         <p>• Supply Chain</p>
+         <p>• Logistics</p>
+        </div>
+       </div>
+       <div class="bg-white rounded-xl border border-slate-200 p-5 text-center">
+        <div class="w-12 h-12 rounded-full bg-violet-100 flex items-center justify-center mx-auto mb-3"><i data-lucide="trending-up" class="w-6 h-6 text-violet-600"></i>
+        </div>
+        <h4 class="font-semibold text-slate-800">Sales</h4>
+        <p class="text-xs text-slate-500 mt-1" id="org-sales">0 karyawan</p>
+        <div class="mt-3 space-y-1 text-xs text-slate-600">
+         <p>• Sales Manager</p>
+         <p>• Account Executive</p>
+         <p>• Business Dev</p>
+        </div>
+       </div>
+      </div>
+     </div><!-- Attendance Page -->
+     <div id="page-attendance" class="page fade-in hidden">
+      <h2 class="text-base font-semibold text-slate-800 mb-1">Manajemen Kehadiran</h2>
+      <p class="text-xs text-slate-500 mb-5">Absensi berbasis AI dengan face recognition &amp; GPS</p>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+       <div class="bg-white rounded-xl border border-slate-200 p-5">
+        <div class="flex items-center gap-3 mb-3">
+         <div class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center"><i data-lucide="scan-face" class="w-5 h-5 text-green-600"></i>
+         </div>
+         <div>
+          <p class="text-xs text-slate-500">Face Recognition</p>
+          <p class="font-semibold text-slate-800">Aktif</p>
+         </div>
+        </div>
+        <p class="text-xs text-slate-500">Liveness check &amp; anti-spoofing</p>
+       </div>
+       <div class="bg-white rounded-xl border border-slate-200 p-5">
+        <div class="flex items-center gap-3 mb-3">
+         <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center"><i data-lucide="map-pin" class="w-5 h-5 text-blue-600"></i>
+         </div>
+         <div>
+          <p class="text-xs text-slate-500">GPS &amp; Geofencing</p>
+          <p class="font-semibold text-slate-800">Aktif</p>
+         </div>
+        </div>
+        <p class="text-xs text-slate-500">Radius 100m dari kantor</p>
+       </div>
+       <div class="bg-white rounded-xl border border-slate-200 p-5">
+        <div class="flex items-center gap-3 mb-3">
+         <div class="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center"><i data-lucide="clock" class="w-5 h-5 text-purple-600"></i>
+         </div>
+         <div>
+          <p class="text-xs text-slate-500">Shift Hari Ini</p>
+          <p class="font-semibold text-slate-800">08:00 - 17:00</p>
+         </div>
+        </div>
+        <p class="text-xs text-slate-500">Shift pagi reguler</p>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl border border-slate-200 p-5">
+       <h3 class="font-semibold text-slate-800 mb-4">Log Kehadiran Hari Ini</h3>
+       <div id="attendance-log" class="space-y-2">
+        <p class="text-sm text-slate-400 text-center py-6">Data kehadiran akan muncul saat karyawan melakukan clock-in</p>
+       </div>
+      </div>
+     </div><!-- Leave Page -->
+     <div id="page-leave" class="page fade-in hidden">
+      <h2 class="text-base font-semibold text-slate-800 mb-1">Cuti &amp; Lembur</h2>
+      <p class="text-xs text-slate-500 mb-5">Manajemen pengajuan cuti dan lembur</p>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+       <div class="bg-white rounded-xl border border-slate-200 p-4 text-center">
+        <p class="text-xs text-slate-500">Sisa Cuti Tahunan</p>
+        <p class="text-2xl font-bold text-indigo-600 mt-1">12</p>
+        <p class="text-xs text-slate-400">hari</p>
+       </div>
+       <div class="bg-white rounded-xl border border-slate-200 p-4 text-center">
+        <p class="text-xs text-slate-500">Cuti Sakit</p>
+        <p class="text-2xl font-bold text-cyan-600 mt-1">14</p>
+        <p class="text-xs text-slate-400">hari</p>
+       </div>
+       <div class="bg-white rounded-xl border border-slate-200 p-4 text-center">
+        <p class="text-xs text-slate-500">Lembur Bulan Ini</p>
+        <p class="text-2xl font-bold text-amber-600 mt-1">0</p>
+        <p class="text-xs text-slate-400">jam</p>
+       </div>
+       <div class="bg-white rounded-xl border border-slate-200 p-4 text-center">
+        <p class="text-xs text-slate-500">Pending Approval</p>
+        <p class="text-2xl font-bold text-rose-600 mt-1">0</p>
+        <p class="text-xs text-slate-400">pengajuan</p>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl border border-slate-200 p-5">
+       <h3 class="font-semibold text-slate-800 mb-4">Riwayat Pengajuan</h3>
+       <p class="text-sm text-slate-400 text-center py-6">Belum ada pengajuan cuti atau lembur</p>
+      </div>
+     </div><!-- Payroll Page -->
+     <div id="page-payroll" class="page fade-in hidden">
+      <h2 class="text-base font-semibold text-slate-800 mb-1">Penggajian &amp; Pajak</h2>
+      <p class="text-xs text-slate-500 mb-5">Payroll otomatis terintegrasi PPh 21 &amp; BPJS</p>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+       <div class="bg-white rounded-xl border border-slate-200 p-5">
+        <p class="text-xs text-slate-500 mb-1">Total Payroll Bulan Ini</p>
+        <p id="payroll-total" class="text-xl font-bold text-slate-800">Rp 0</p>
+        <p class="text-xs text-slate-400 mt-1">Termasuk tunjangan &amp; potongan</p>
+       </div>
+       <div class="bg-white rounded-xl border border-slate-200 p-5">
+        <p class="text-xs text-slate-500 mb-1">PPh 21</p>
+        <p class="text-xl font-bold text-slate-800">Rp 0</p>
+        <p class="text-xs text-slate-400 mt-1">Metode Gross Up</p>
+       </div>
+       <div class="bg-white rounded-xl border border-slate-200 p-5">
+        <p class="text-xs text-slate-500 mb-1">BPJS (Kes + TK)</p>
+        <p class="text-xl font-bold text-slate-800">Rp 0</p>
+        <p class="text-xs text-slate-400 mt-1">Kontribusi perusahaan</p>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl border border-slate-200 p-5">
+       <h3 class="font-semibold text-slate-800 mb-4">Slip Gaji Karyawan</h3>
+       <div id="payroll-list"></div>
+       <p id="payroll-empty" class="text-sm text-slate-400 text-center py-6">Tambahkan karyawan untuk generate slip gaji</p>
+      </div>
+     </div><!-- Recruitment Page -->
+     <div id="page-recruitment" class="page fade-in hidden">
+      <h2 class="text-base font-semibold text-slate-800 mb-1">Rekrutmen (ATS)</h2>
+      <p class="text-xs text-slate-500 mb-5">Applicant Tracking System</p>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+       <div class="bg-white rounded-xl border border-slate-200 p-4">
+        <div class="flex items-center justify-between mb-2">
+         <p class="text-xs font-medium text-slate-600">Lamaran Masuk</p>
+         <div class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center"><i data-lucide="inbox" class="w-4 h-4 text-blue-600"></i>
+         </div>
+        </div>
+        <p class="text-xl font-bold text-slate-800">0</p>
+       </div>
+       <div class="bg-white rounded-xl border border-slate-200 p-4">
+        <div class="flex items-center justify-between mb-2">
+         <p class="text-xs font-medium text-slate-600">Screening</p>
+         <div class="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center"><i data-lucide="filter" class="w-4 h-4 text-amber-600"></i>
+         </div>
+        </div>
+        <p class="text-xl font-bold text-slate-800">0</p>
+       </div>
+       <div class="bg-white rounded-xl border border-slate-200 p-4">
+        <div class="flex items-center justify-between mb-2">
+         <p class="text-xs font-medium text-slate-600">Interview</p>
+         <div class="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center"><i data-lucide="video" class="w-4 h-4 text-purple-600"></i>
+         </div>
+        </div>
+        <p class="text-xl font-bold text-slate-800">0</p>
+       </div>
+       <div class="bg-white rounded-xl border border-slate-200 p-4">
+        <div class="flex items-center justify-between mb-2">
+         <p class="text-xs font-medium text-slate-600">Diterima</p>
+         <div class="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center"><i data-lucide="check-circle" class="w-4 h-4 text-green-600"></i>
+         </div>
+        </div>
+        <p class="text-xl font-bold text-slate-800">0</p>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl border border-slate-200 p-5">
+       <h3 class="font-semibold text-slate-800 mb-4">Pipeline Rekrutmen</h3>
+       <p class="text-sm text-slate-400 text-center py-6">Buat lowongan untuk memulai proses rekrutmen</p>
+      </div>
+     </div><!-- Performance Page -->
+     <div id="page-performance" class="page fade-in hidden">
+      <h2 class="text-base font-semibold text-slate-800 mb-1">Manajemen Kinerja</h2>
+      <p class="text-xs text-slate-500 mb-5">KPI, OKR &amp; 360° Feedback</p>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+       <div class="bg-white rounded-xl border border-slate-200 p-5">
+        <h4 class="font-semibold text-sm text-slate-800 mb-3">KPI Overview</h4>
+        <div class="space-y-3">
+         <div>
+          <div class="flex justify-between text-xs mb-1"><span class="text-slate-600">Target Revenue</span><span class="text-indigo-600 font-medium">78%</span>
+          </div>
+          <div class="w-full bg-slate-100 rounded-full h-2">
+           <div class="bg-indigo-500 h-2 rounded-full progress-bar" style="width:78%"></div>
+          </div>
+         </div>
+         <div>
+          <div class="flex justify-between text-xs mb-1"><span class="text-slate-600">Customer Satisfaction</span><span class="text-green-600 font-medium">92%</span>
+          </div>
+          <div class="w-full bg-slate-100 rounded-full h-2">
+           <div class="bg-green-500 h-2 rounded-full progress-bar" style="width:92%"></div>
+          </div>
+         </div>
+         <div>
+          <div class="flex justify-between text-xs mb-1"><span class="text-slate-600">Project Delivery</span><span class="text-amber-600 font-medium">65%</span>
+          </div>
+          <div class="w-full bg-slate-100 rounded-full h-2">
+           <div class="bg-amber-500 h-2 rounded-full progress-bar" style="width:65%"></div>
+          </div>
+         </div>
+        </div>
+       </div>
+       <div class="bg-white rounded-xl border border-slate-200 p-5">
+        <h4 class="font-semibold text-sm text-slate-800 mb-3">OKR Q4 2024</h4>
+        <div class="space-y-2 text-xs">
+         <div class="p-2 bg-green-50 rounded-lg">
+          <p class="font-medium text-green-800">✅ Expand market to 3 cities</p>
+          <p class="text-green-600 mt-1">Completed</p>
+         </div>
+         <div class="p-2 bg-amber-50 rounded-lg">
+          <p class="font-medium text-amber-800">🔄 Reduce churn by 15%</p>
+          <p class="text-amber-600 mt-1">In Progress - 10% achieved</p>
+         </div>
+         <div class="p-2 bg-slate-50 rounded-lg">
+          <p class="font-medium text-slate-700">⏳ Launch mobile app v2</p>
+          <p class="text-slate-500 mt-1">Planned</p>
+         </div>
+        </div>
+       </div>
+       <div class="bg-white rounded-xl border border-slate-200 p-5">
+        <h4 class="font-semibold text-sm text-slate-800 mb-3">360° Feedback</h4>
+        <div class="text-center py-4">
+         <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-indigo-50 mb-3"><span class="text-2xl font-bold text-indigo-600">4.2</span>
+         </div>
+         <p class="text-xs text-slate-500">Rata-rata skor feedback</p>
+         <p class="text-xs text-slate-400 mt-1">dari 5.0</p>
+        </div>
+       </div>
+      </div>
+     </div><!-- Learning Page -->
+     <div id="page-learning" class="page fade-in hidden">
+      <h2 class="text-base font-semibold text-slate-800 mb-1">Learning Management System</h2>
+      <p class="text-xs text-slate-500 mb-5">Platform pelatihan &amp; pengembangan kompetensi</p>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+       <div class="bg-white rounded-xl border border-slate-200 p-5 card-hover">
+        <div class="w-full h-28 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-lg mb-4 flex items-center justify-center"><i data-lucide="code" class="w-10 h-10 text-white"></i>
+        </div>
+        <h4 class="font-semibold text-sm text-slate-800">Fullstack Development</h4>
+        <p class="text-xs text-slate-500 mt-1">12 modul • 24 jam</p>
+        <div class="mt-3">
+         <div class="flex justify-between text-xs mb-1"><span class="text-slate-500">Progress</span><span class="text-indigo-600">0%</span>
+         </div>
+         <div class="w-full bg-slate-100 rounded-full h-1.5">
+          <div class="bg-indigo-500 h-1.5 rounded-full" style="width:0%"></div>
+         </div>
+        </div>
+       </div>
+       <div class="bg-white rounded-xl border border-slate-200 p-5 card-hover">
+        <div class="w-full h-28 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-lg mb-4 flex items-center justify-center"><i data-lucide="presentation" class="w-10 h-10 text-white"></i>
+        </div>
+        <h4 class="font-semibold text-sm text-slate-800">Leadership Training</h4>
+        <p class="text-xs text-slate-500 mt-1">8 modul • 16 jam</p>
+        <div class="mt-3">
+         <div class="flex justify-between text-xs mb-1"><span class="text-slate-500">Progress</span><span class="text-cyan-600">0%</span>
+         </div>
+         <div class="w-full bg-slate-100 rounded-full h-1.5">
+          <div class="bg-cyan-500 h-1.5 rounded-full" style="width:0%"></div>
+         </div>
+        </div>
+       </div>
+       <div class="bg-white rounded-xl border border-slate-200 p-5 card-hover">
+        <div class="w-full h-28 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg mb-4 flex items-center justify-center"><i data-lucide="shield" class="w-10 h-10 text-white"></i>
+        </div>
+        <h4 class="font-semibold text-sm text-slate-800">Compliance &amp; Safety</h4>
+        <p class="text-xs text-slate-500 mt-1">6 modul • 10 jam</p>
+        <div class="mt-3">
+         <div class="flex justify-between text-xs mb-1"><span class="text-slate-500">Progress</span><span class="text-amber-600">0%</span>
+         </div>
+         <div class="w-full bg-slate-100 rounded-full h-1.5">
+          <div class="bg-amber-500 h-1.5 rounded-full" style="width:0%"></div>
+         </div>
+        </div>
+       </div>
+      </div>
+     </div><!-- Analytics Page -->
+     <div id="page-analytics" class="page fade-in hidden">
+      <h2 class="text-base font-semibold text-slate-800 mb-1">HR Analytics</h2>
+      <p class="text-xs text-slate-500 mb-5">Dashboard analitik &amp; insight strategis</p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+       <div class="bg-white rounded-xl border border-slate-200 p-5">
+        <h4 class="font-semibold text-sm text-slate-800 mb-4">Turnover Rate (12 Bulan)</h4>
+        <div class="flex items-end gap-1 h-32" id="turnover-chart">
+         <div class="flex-1 bg-indigo-200 rounded-t" style="height:30%" title="Jan">
+          <div class="text-center text-xs text-indigo-700 -mt-4">
+           3%
+          </div>
+         </div>
+         <div class="flex-1 bg-indigo-200 rounded-t" style="height:20%" title="Feb">
+          <div class="text-center text-xs text-indigo-700 -mt-4">
+           2%
+          </div>
+         </div>
+         <div class="flex-1 bg-indigo-300 rounded-t" style="height:50%" title="Mar">
+          <div class="text-center text-xs text-indigo-700 -mt-4">
+           5%
+          </div>
+         </div>
+         <div class="flex-1 bg-indigo-200 rounded-t" style="height:40%" title="Apr">
+          <div class="text-center text-xs text-indigo-700 -mt-4">
+           4%
+          </div>
+         </div>
+         <div class="flex-1 bg-indigo-300 rounded-t" style="height:30%" title="May">
+          <div class="text-center text-xs text-indigo-700 -mt-4">
+           3%
+          </div>
+         </div>
+         <div class="flex-1 bg-indigo-200 rounded-t" style="height:20%" title="Jun">
+          <div class="text-center text-xs text-indigo-700 -mt-4">
+           2%
+          </div>
+         </div>
+         <div class="flex-1 bg-indigo-200 rounded-t" style="height:10%" title="Jul">
+          <div class="text-center text-xs text-indigo-700 -mt-4">
+           1%
+          </div>
+         </div>
+         <div class="flex-1 bg-indigo-300 rounded-t" style="height:30%" title="Aug">
+          <div class="text-center text-xs text-indigo-700 -mt-4">
+           3%
+          </div>
+         </div>
+         <div class="flex-1 bg-indigo-200 rounded-t" style="height:20%" title="Sep">
+          <div class="text-center text-xs text-indigo-700 -mt-4">
+           2%
+          </div>
+         </div>
+         <div class="flex-1 bg-indigo-400 rounded-t" style="height:60%" title="Oct">
+          <div class="text-center text-xs text-white -mt-4">
+           6%
+          </div>
+         </div>
+         <div class="flex-1 bg-indigo-300 rounded-t" style="height:40%" title="Nov">
+          <div class="text-center text-xs text-indigo-700 -mt-4">
+           4%
+          </div>
+         </div>
+         <div class="flex-1 bg-indigo-200 rounded-t" style="height:20%" title="Dec">
+          <div class="text-center text-xs text-indigo-700 -mt-4">
+           2%
+          </div>
+         </div>
+        </div>
+        <div class="flex justify-between text-xs text-slate-400 mt-2"><span>Jan</span><span>Jun</span><span>Dec</span>
+        </div>
+       </div>
+       <div class="bg-white rounded-xl border border-slate-200 p-5">
+        <h4 class="font-semibold text-sm text-slate-800 mb-4">Demografi Karyawan</h4>
+        <div class="grid grid-cols-2 gap-3">
+         <div class="p-3 bg-blue-50 rounded-lg text-center">
+          <p class="text-lg font-bold text-blue-700" id="demo-male">0</p>
+          <p class="text-xs text-blue-600">Laki-laki</p>
+         </div>
+         <div class="p-3 bg-pink-50 rounded-lg text-center">
+          <p class="text-lg font-bold text-pink-700" id="demo-female">0</p>
+          <p class="text-xs text-pink-600">Perempuan</p>
+         </div>
+         <div class="p-3 bg-green-50 rounded-lg text-center">
+          <p class="text-lg font-bold text-green-700" id="demo-permanent">0</p>
+          <p class="text-xs text-green-600">Tetap</p>
+         </div>
+         <div class="p-3 bg-amber-50 rounded-lg text-center">
+          <p class="text-lg font-bold text-amber-700" id="demo-contract">0</p>
+          <p class="text-xs text-amber-600">Kontrak</p>
+         </div>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl border border-slate-200 p-5">
+       <h4 class="font-semibold text-sm text-slate-800 mb-3">Integrasi Pihak Ketiga</h4>
+       <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div class="flex items-center gap-3 p-3 border border-slate-100 rounded-lg">
+         <div class="w-8 h-8 rounded bg-green-100 flex items-center justify-center text-xs font-bold text-green-700">
+          MJ
+         </div>
+         <div>
+          <p class="text-sm font-medium text-slate-800">Mekari Jurnal</p>
+          <p class="text-xs text-green-600">Terhubung ✓</p>
+         </div>
+        </div>
+        <div class="flex items-center gap-3 p-3 border border-slate-100 rounded-lg">
+         <div class="w-8 h-8 rounded bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-700">
+          BK
+         </div>
+         <div>
+          <p class="text-sm font-medium text-slate-800">Bank Transfer</p>
+          <p class="text-xs text-green-600">Terhubung ✓</p>
+         </div>
+        </div>
+        <div class="flex items-center gap-3 p-3 border border-slate-100 rounded-lg">
+         <div class="w-8 h-8 rounded bg-purple-100 flex items-center justify-center text-xs font-bold text-purple-700">
+          FP
+         </div>
+         <div>
+          <p class="text-sm font-medium text-slate-800">Fingerprint</p>
+          <p class="text-xs text-green-600">Terhubung ✓</p>
+         </div>
+        </div>
+       </div>
+      </div>
+     </div><!-- Assets Page -->
+     <div id="page-assets" class="page fade-in hidden">
+      <h2 class="text-base font-semibold text-slate-800 mb-1">Manajemen Aset</h2>
+      <p class="text-xs text-slate-500 mb-5">Pelacakan inventaris perusahaan</p>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+       <div class="bg-white rounded-xl border border-slate-200 p-4 text-center"><i data-lucide="laptop" class="w-6 h-6 text-indigo-500 mx-auto mb-2"></i>
+        <p class="text-lg font-bold text-slate-800">0</p>
+        <p class="text-xs text-slate-500">Laptop</p>
+       </div>
+       <div class="bg-white rounded-xl border border-slate-200 p-4 text-center"><i data-lucide="smartphone" class="w-6 h-6 text-cyan-500 mx-auto mb-2"></i>
+        <p class="text-lg font-bold text-slate-800">0</p>
+        <p class="text-xs text-slate-500">Handphone</p>
+       </div>
+       <div class="bg-white rounded-xl border border-slate-200 p-4 text-center"><i data-lucide="car" class="w-6 h-6 text-amber-500 mx-auto mb-2"></i>
+        <p class="text-lg font-bold text-slate-800">0</p>
+        <p class="text-xs text-slate-500">Kendaraan</p>
+       </div>
+       <div class="bg-white rounded-xl border border-slate-200 p-4 text-center"><i data-lucide="monitor" class="w-6 h-6 text-green-500 mx-auto mb-2"></i>
+        <p class="text-lg font-bold text-slate-800">0</p>
+        <p class="text-xs text-slate-500">Perangkat Lain</p>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl border border-slate-200 p-5">
+       <h3 class="font-semibold text-slate-800 mb-4">Daftar Aset Dipinjamkan</h3>
+       <p class="text-sm text-slate-400 text-center py-6">Belum ada aset yang tercatat</p>
+      </div>
+     </div>
+    </div><!-- end page-container -->
+   </main>
+  </div><!-- end app --> <!-- Login Screen -->
+  <div id="login-screen" class="h-full w-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900">
+   <div class="w-full max-w-md mx-4">
+    <div class="text-center mb-8">
+     <div class="w-16 h-16 rounded-2xl bg-indigo-500 flex items-center justify-center font-bold text-2xl text-white mx-auto mb-4">
+      HR
+     </div>
+     <h1 class="text-2xl font-bold text-white">HRIS Pro</h1>
+     <p class="text-slate-300 text-sm mt-1">Human Resource Information System</p>
+    </div>
+    <div id="login-form-container" class="bg-white rounded-2xl shadow-2xl p-8">
+     <div id="login-panel">
+      <h2 class="text-xl font-bold text-slate-800 mb-6">Masuk ke Sistem</h2>
+      <form onsubmit="handleLogin(event)" class="space-y-4">
+       <div><label class="block text-sm font-medium text-slate-700 mb-1">Username atau Email</label><input id="login-username" type="text" required class="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:border-indigo-500" placeholder="admin@hris.com">
+       </div>
+       <div><label class="block text-sm font-medium text-slate-700 mb-1">Password</label><input id="login-password" type="password" required class="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:border-indigo-500" placeholder="••••••••">
+       </div>
+       <div id="login-error" class="hidden text-sm text-red-600 bg-red-50 p-3 rounded-lg"></div><button type="submit" id="login-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg text-sm transition"> Masuk </button>
+      </form>
+      <p class="text-center text-sm text-slate-600 mt-6">Belum punya akun? <button onclick="switchToRegister()" class="text-indigo-600 font-medium hover:underline">Buat Admin Baru</button></p>
+      <div class="mt-6 pt-6 border-t border-slate-200">
+       <p class="text-xs text-slate-500 text-center">Demo Account:</p>
+       <p class="text-xs text-slate-600 text-center">Username: <span class="font-mono bg-slate-100 px-2 py-1 rounded">admin</span></p>
+       <p class="text-xs text-slate-600 text-center">Password: <span class="font-mono bg-slate-100 px-2 py-1 rounded">admin123</span></p>
+      </div>
+     </div>
+     <div id="register-panel" class="hidden">
+      <h2 class="text-xl font-bold text-slate-800 mb-6">Buat Admin Baru</h2>
+      <form onsubmit="handleRegister(event)" class="space-y-4">
+       <div><label class="block text-sm font-medium text-slate-700 mb-1">Nama Lengkap</label><input id="reg-name" type="text" required class="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm" placeholder="Nama Anda">
+       </div>
+       <div><label class="block text-sm font-medium text-slate-700 mb-1">Email</label><input id="reg-email" type="email" required class="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm" placeholder="email@perusahaan.com">
+       </div>
+       <div><label class="block text-sm font-medium text-slate-700 mb-1">Username</label><input id="reg-username" type="text" required class="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm" placeholder="username">
+       </div>
+       <div><label class="block text-sm font-medium text-slate-700 mb-1">Password</label><input id="reg-password" type="password" required class="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm" placeholder="Minimal 6 karakter">
+       </div>
+       <div><label class="block text-sm font-medium text-slate-700 mb-1">Konfirmasi Password</label><input id="reg-confirm" type="password" required class="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm" placeholder="Ketik ulang password">
+       </div>
+       <div id="register-error" class="hidden text-sm text-red-600 bg-red-50 p-3 rounded-lg"></div><button type="submit" id="register-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg text-sm transition"> Buat Akun </button>
+      </form>
+      <p class="text-center text-sm text-slate-600 mt-6">Sudah punya akun? <button onclick="switchToLogin()" class="text-indigo-600 font-medium hover:underline">Masuk di sini</button></p>
+     </div>
+    </div>
+   </div>
+  </div><!-- Admin Profile Modal -->
+  <div id="profile-modal" class="fixed inset-0 z-50 hidden">
+   <div class="modal-overlay absolute inset-0" onclick="closeProfileModal()"></div>
+   <div class="absolute right-0 top-0 h-full w-full max-w-sm bg-white shadow-xl overflow-y-auto">
+    <div class="p-6">
+     <div class="flex items-center justify-between mb-6">
+      <h3 class="text-lg font-bold text-slate-800">Profil Admin</h3><button onclick="closeProfileModal()" class="p-2 hover:bg-slate-100 rounded-lg"><i data-lucide="x" class="w-5 h-5 text-slate-500"></i></button>
+     </div>
+     <div class="space-y-4">
+      <div class="p-4 bg-indigo-50 rounded-lg text-center">
+       <div class="w-14 h-14 rounded-full bg-indigo-500 text-white font-bold text-xl flex items-center justify-center mx-auto mb-2"><span id="profile-avatar">A</span>
+       </div>
+       <p id="profile-name" class="font-semibold text-slate-800">Admin Name</p>
+       <p id="profile-role" class="text-xs text-slate-500 mt-1">Super Admin</p>
+      </div>
+      <div class="space-y-3">
+       <div>
+        <p class="text-xs font-medium text-slate-600 mb-1">Email</p>
+        <p id="profile-email" class="text-sm text-slate-800">admin@hris.com</p>
+       </div>
+       <div>
+        <p class="text-xs font-medium text-slate-600 mb-1">Username</p>
+        <p id="profile-username" class="text-sm text-slate-800">admin</p>
+       </div>
+       <div>
+        <p class="text-xs font-medium text-slate-600 mb-1">Last Login</p>
+        <p id="profile-lastlogin" class="text-sm text-slate-800">-</p>
+       </div>
+      </div>
+      <div class="pt-4 space-y-2 border-t border-slate-200"><button onclick="changePassword()" class="w-full flex items-center gap-2 px-4 py-2 text-slate-700 hover:bg-slate-50 rounded-lg text-sm"> <i data-lucide="key" class="w-4 h-4"></i> Ubah Password </button> <button onclick="handleLogout()" class="w-full flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm"> <i data-lucide="log-out" class="w-4 h-4"></i> Keluar </button>
+      </div>
+     </div>
+    </div>
+   </div>
+  </div><!-- Change Password Modal -->
+  <div id="password-modal" class="fixed inset-0 z-50 hidden">
+   <div class="modal-overlay absolute inset-0" onclick="closePasswordModal()"></div>
+   <div class="absolute inset-0 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full">
+     <h3 class="text-lg font-bold text-slate-800 mb-4">Ubah Password</h3>
+     <form onsubmit="handleChangePassword(event)" class="space-y-4">
+      <div><label class="block text-sm font-medium text-slate-700 mb-1">Password Lama</label><input id="old-password" type="password" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm">
+      </div>
+      <div><label class="block text-sm font-medium text-slate-700 mb-1">Password Baru</label><input id="new-password" type="password" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm">
+      </div>
+      <div><label class="block text-sm font-medium text-slate-700 mb-1">Konfirmasi Password Baru</label><input id="confirm-password" type="password" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm">
+      </div>
+      <div id="password-error" class="hidden text-sm text-red-600 bg-red-50 p-3 rounded-lg"></div>
+      <div class="flex gap-3 pt-4"><button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-4 py-2 rounded-lg font-medium">Simpan</button> <button type="button" onclick="closePasswordModal()" class="px-4 py-2 border border-slate-200 rounded-lg text-sm text-slate-600 hover:bg-slate-50">Batal</button>
+      </div>
+     </form>
+    </div>
+   </div>
+  </div><!-- Employee Modal -->
+  <div id="emp-modal" class="fixed inset-0 z-50 hidden">
+   <div class="modal-overlay absolute inset-0" onclick="closeEmployeeModal()"></div>
+   <div class="absolute right-0 top-0 h-full w-full max-w-lg bg-white shadow-xl overflow-y-auto">
+    <div class="p-6">
+     <div class="flex items-center justify-between mb-6">
+      <h3 id="modal-title" class="text-lg font-bold text-slate-800">Tambah Karyawan Baru</h3><button onclick="closeEmployeeModal()" class="p-2 hover:bg-slate-100 rounded-lg"><i data-lucide="x" class="w-5 h-5 text-slate-500"></i></button>
+     </div>
+     <form id="emp-form" onsubmit="handleEmployeeSubmit(event)" class="space-y-4">
+      <input type="hidden" id="emp-edit-id" value="">
+      <div><label class="block text-sm font-medium text-slate-700 mb-1" for="emp-name">Nama Lengkap *</label><input id="emp-name" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm">
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+       <div><label class="block text-sm font-medium text-slate-700 mb-1" for="emp-email">Email *</label><input id="emp-email" type="email" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm">
+       </div>
+       <div><label class="block text-sm font-medium text-slate-700 mb-1" for="emp-phone">Telepon</label><input id="emp-phone" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm">
+       </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+       <div><label class="block text-sm font-medium text-slate-700 mb-1" for="emp-dept">Departemen *</label><select id="emp-dept" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"><option value="">Pilih</option><option>Engineering</option><option>HR</option><option>Finance</option><option>Marketing</option><option>Operations</option><option>Sales</option></select>
+       </div>
+       <div><label class="block text-sm font-medium text-slate-700 mb-1" for="emp-position">Posisi *</label><input id="emp-position" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm">
+       </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+       <div><label class="block text-sm font-medium text-slate-700 mb-1" for="emp-status">Status</label><select id="emp-status" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"><option>Aktif</option><option>Kontrak</option><option>Probation</option><option>Resign</option></select>
+       </div>
+       <div><label class="block text-sm font-medium text-slate-700 mb-1" for="emp-join">Tgl Masuk</label><input id="emp-join" type="date" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm">
+       </div>
+      </div>
+      <div><label class="block text-sm font-medium text-slate-700 mb-1" for="emp-salary">Gaji Pokok (Rp)</label><input id="emp-salary" type="number" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="0">
+      </div>
+      <div><label class="block text-sm font-medium text-slate-700 mb-1" for="emp-notes">Catatan</label><textarea id="emp-notes" rows="2" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"></textarea>
+      </div>
+      <div class="flex gap-3 pt-2">
+       <button type="submit" id="emp-submit-btn" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-4 py-2.5 rounded-lg font-medium">Simpan Karyawan</button> <button type="button" onclick="closeEmployeeModal()" class="px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-600 hover:bg-slate-50">Batal</button>
+      </div>
+     </form>
+    </div>
+   </div>
+  </div><!-- Training Modal -->
+  <div id="training-modal" class="fixed inset-0 z-50 hidden">
+   <div class="modal-overlay absolute inset-0" onclick="closeTrainingModal()"></div>
+   <div class="absolute right-0 top-0 h-full w-full max-w-lg bg-white shadow-xl overflow-y-auto">
+    <div class="p-6">
+     <div class="flex items-center justify-between mb-6">
+      <h3 id="training-modal-title" class="text-lg font-bold text-slate-800">Tambah Pelatihan</h3><button onclick="closeTrainingModal()" class="p-2 hover:bg-slate-100 rounded-lg"><i data-lucide="x" class="w-5 h-5 text-slate-500"></i></button>
+     </div>
+     <form id="training-form" onsubmit="handleTrainingSubmit(event)" class="space-y-4">
+      <input type="hidden" id="training-edit-id" value="">
+      <div><label class="block text-sm font-medium text-slate-700 mb-1" for="training-name">Nama Pelatihan *</label><input id="training-name" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="Contoh: Fullstack Development">
+      </div>
+      <div><label class="block text-sm font-medium text-slate-700 mb-1" for="training-category">Kategori *</label><select id="training-category" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"><option value="">Pilih Kategori</option><option>Technical</option><option>Soft Skills</option><option>Leadership</option><option>Compliance</option><option>Personal Development</option></select>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+       <div><label class="block text-sm font-medium text-slate-700 mb-1" for="training-modules">Jumlah Modul *</label><input id="training-modules" type="number" min="1" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="12">
+       </div>
+       <div><label class="block text-sm font-medium text-slate-700 mb-1" for="training-hours">Total Jam *</label><input id="training-hours" type="number" min="1" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="24">
+       </div>
+      </div>
+      <div><label class="block text-sm font-medium text-slate-700 mb-1" for="training-description">Deskripsi</label><textarea id="training-description" rows="3" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="Jelaskan tujuan dan konten pelatihan..."></textarea>
+      </div>
+      <div class="flex gap-3 pt-2">
+       <button type="submit" id="training-submit-btn" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-4 py-2.5 rounded-lg font-medium">Simpan Pelatihan</button> <button type="button" onclick="closeTrainingModal()" class="px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-600 hover:bg-slate-50">Batal</button>
+      </div>
+     </form>
+    </div>
+   </div>
+  </div>
+  <div id="delete-confirm" class="fixed inset-0 z-50 hidden">
+   <div class="modal-overlay absolute inset-0" onclick="closeDeleteConfirm()"></div>
+   <div class="absolute inset-0 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full">
+     <h3 class="font-bold text-slate-800 mb-2">Hapus Item?</h3>
+     <p id="delete-msg" class="text-sm text-slate-500 mb-5">Data akan dihapus permanen dan tidak dapat dikembalikan.</p>
+     <div class="flex gap-3">
+      <button onclick="confirmDelete()" id="delete-btn" class="flex-1 bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-2 rounded-lg">Hapus</button> <button onclick="closeDeleteConfirm()" class="flex-1 border border-slate-200 text-sm px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-50">Batal</button>
+     </div>
+    </div>
+   </div>
+  </div><!-- Toast -->
+  <div id="toast" class="fixed bottom-4 right-4 z-50 hidden">
+   <div class="bg-slate-800 text-white text-sm px-4 py-3 rounded-lg shadow-lg flex items-center gap-2">
+    <i data-lucide="check-circle" class="w-4 h-4 text-green-400"></i> <span id="toast-msg">Berhasil</span>
+   </div>
+  </div>
+  <script>
+// State
+let allEmployees = [];
+let allUsers = [];
+let allTrainings = [];
+let currentPage = 'dashboard';
+let deleteTarget = null;
+let deleteType = null;
+let currentUser = null;
+
+const defaultConfig = {
+  app_title: 'HRIS Pro',
+  company_name: 'PT Perusahaan Anda',
+  bg_color: '#f8fafc',
+  sidebar_color: '#0f172a',
+  text_color: '#1e293b',
+  accent_color: '#6366f1',
+  surface_color: '#ffffff'
+};
+
+// Check if logged in on load
+(async () => {
+  const stored = localStorage.getItem('hris_user');
+  if (stored) {
+    try {
+      currentUser = JSON.parse(stored);
+      showDashboard();
+    } catch {
+      showLogin();
+    }
+  } else {
+    showLogin();
+  }
+})();
+
+// Auth functions
+function switchToRegister() {
+  document.getElementById('login-panel').classList.add('hidden');
+  document.getElementById('register-panel').classList.remove('hidden');
+  document.getElementById('register-error').classList.add('hidden');
+  clearRegisterForm();
+}
+
+function switchToLogin() {
+  document.getElementById('register-panel').classList.add('hidden');
+  document.getElementById('login-panel').classList.remove('hidden');
+  document.getElementById('login-error').classList.add('hidden');
+}
+
+function clearRegisterForm() {
+  document.getElementById('reg-name').value = '';
+  document.getElementById('reg-email').value = '';
+  document.getElementById('reg-username').value = '';
+  document.getElementById('reg-password').value = '';
+  document.getElementById('reg-confirm').value = '';
+}
+
+async function handleLogin(e) {
+  e.preventDefault();
+  const username = document.getElementById('login-username').value;
+  const password = document.getElementById('login-password').value;
+  const errorDiv = document.getElementById('login-error');
+
+  // Check against all users
+  const user = allUsers.find(u => (u.username === username || u.user_email === username) && u.password === password);
+
+  if (user) {
+    currentUser = user;
+    localStorage.setItem('hris_user', JSON.stringify(user));
+    document.getElementById('login-btn').textContent = 'Masuk...';
+    setTimeout(() => {
+      document.getElementById('login-btn').textContent = 'Masuk';
+      showDashboard();
+    }, 500);
+  } else {
+    errorDiv.textContent = 'Username/Email atau password salah!';
+    errorDiv.classList.remove('hidden');
+  }
+}
+
+async function handleRegister(e) {
+  e.preventDefault();
+  const name = document.getElementById('reg-name').value;
+  const email = document.getElementById('reg-email').value;
+  const username = document.getElementById('reg-username').value;
+  const pwd = document.getElementById('reg-password').value;
+  const confirm = document.getElementById('reg-confirm').value;
+  const errorDiv = document.getElementById('register-error');
+
+  if (pwd.length < 6) {
+    errorDiv.textContent = 'Password minimal 6 karakter!';
+    errorDiv.classList.remove('hidden');
+    return;
+  }
+
+  if (pwd !== confirm) {
+    errorDiv.textContent = 'Password tidak cocok!';
+    errorDiv.classList.remove('hidden');
+    return;
+  }
+
+  if (allUsers.some(u => u.username === username)) {
+    errorDiv.textContent = 'Username sudah terdaftar!';
+    errorDiv.classList.remove('hidden');
+    return;
+  }
+
+  const newUser = {
+    type: 'admin',
+    name,
+    user_email: email,
+    username,
+    password: pwd,
+    role: 'Admin',
+    is_active: true,
+    created_at: new Date().toISOString(),
+    last_login: new Date().toISOString()
+  };
+
+  const result = await window.dataSdk.create(newUser);
+  if (result.isOk) {
+    showToast('Akun berhasil dibuat! Silakan masuk');
+    clearRegisterForm();
+    switchToLogin();
+  } else {
+    errorDiv.textContent = 'Gagal membuat akun. Coba lagi!';
+    errorDiv.classList.remove('hidden');
+  }
+}
+
+function handleLogout() {
+  localStorage.removeItem('hris_user');
+  currentUser = null;
+  closeProfileModal();
+  showLogin();
+  showToast('Berhasil logout');
+}
+
+function showLogin() {
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('app').classList.add('hidden');
+}
+
+function showDashboard() {
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  updateProfileDisplay();
+  navigate('dashboard');
+  lucide.createIcons();
+}
+
+function openProfileModal() {
+  if (!currentUser) return;
+  document.getElementById('profile-avatar').textContent = (currentUser.name || 'A')[0].toUpperCase();
+  document.getElementById('profile-name').textContent = currentUser.name || 'Admin';
+  document.getElementById('profile-email').textContent = currentUser.user_email || '-';
+  document.getElementById('profile-username').textContent = currentUser.username || '-';
+  const lastLogin = currentUser.last_login ? new Date(currentUser.last_login).toLocaleString('id-ID') : 'Baru pertama kali';
+  document.getElementById('profile-lastlogin').textContent = lastLogin;
+  document.getElementById('profile-modal').classList.remove('hidden');
+  lucide.createIcons();
+}
+
+function closeProfileModal() {
+  document.getElementById('profile-modal').classList.add('hidden');
+}
+
+function changePassword() {
+  document.getElementById('password-error').classList.add('hidden');
+  document.getElementById('old-password').value = '';
+  document.getElementById('new-password').value = '';
+  document.getElementById('confirm-password').value = '';
+  document.getElementById('password-modal').classList.remove('hidden');
+}
+
+function closePasswordModal() {
+  document.getElementById('password-modal').classList.add('hidden');
+}
+
+async function handleChangePassword(e) {
+  e.preventDefault();
+  const oldPwd = document.getElementById('old-password').value;
+  const newPwd = document.getElementById('new-password').value;
+  const confirm = document.getElementById('confirm-password').value;
+  const errorDiv = document.getElementById('password-error');
+
+  if (oldPwd !== currentUser.password) {
+    errorDiv.textContent = 'Password lama tidak sesuai!';
+    errorDiv.classList.remove('hidden');
+    return;
+  }
+
+  if (newPwd.length < 6) {
+    errorDiv.textContent = 'Password baru minimal 6 karakter!';
+    errorDiv.classList.remove('hidden');
+    return;
+  }
+
+  if (newPwd !== confirm) {
+    errorDiv.textContent = 'Password baru tidak cocok!';
+    errorDiv.classList.remove('hidden');
+    return;
+  }
+
+  // Update password
+  const updated = { ...currentUser, password: newPwd };
+  const result = await window.dataSdk.update(updated);
+
+  if (result.isOk) {
+    currentUser.password = newPwd;
+    localStorage.setItem('hris_user', JSON.stringify(currentUser));
+    showToast('Password berhasil diubah');
+    closePasswordModal();
+  } else {
+    errorDiv.textContent = 'Gagal mengubah password!';
+    errorDiv.classList.remove('hidden');
+  }
+}
+
+function updateProfileDisplay() {
+  if (currentUser) {
+    document.getElementById('sidebar-title').textContent = currentUser.name || 'Admin';
+  }
+}
+
+// Element SDK
+function applyConfig(config) {
+  const c = { ...defaultConfig, ...config };
+  document.getElementById('sidebar-title').textContent = c.app_title;
+  document.getElementById('sidebar-company').textContent = c.company_name;
+  document.body.style.fontFamily = (c.font_family ? c.font_family + ', ' : '') + "'Plus Jakarta Sans', sans-serif";
+  document.getElementById('app').style.backgroundColor = c.bg_color;
+  document.getElementById('sidebar').style.backgroundColor = c.sidebar_color;
+
+  if (c.font_size) {
+    const base = c.font_size;
+    document.querySelectorAll('h1, h2, h3, .text-lg').forEach(el => el.style.fontSize = `${base * 1.25}px`);
+    document.querySelectorAll('p, span, td, th, label, input, select, textarea, button').forEach(el => {
+      if (!el.closest('h1, h2, h3')) el.style.fontSize = `${base}px`;
+    });
+  }
+}
+
+window.elementSdk.init({
+  defaultConfig,
+  onConfigChange: async (config) => applyConfig(config),
+  mapToCapabilities: (config) => ({
+    recolorables: [
+      { get: () => config.bg_color || defaultConfig.bg_color, set: v => { config.bg_color = v; window.elementSdk.setConfig({ bg_color: v }); } },
+      { get: () => config.surface_color || defaultConfig.surface_color, set: v => { config.surface_color = v; window.elementSdk.setConfig({ surface_color: v }); } },
+      { get: () => config.text_color || defaultConfig.text_color, set: v => { config.text_color = v; window.elementSdk.setConfig({ text_color: v }); } },
+      { get: () => config.accent_color || defaultConfig.accent_color, set: v => { config.accent_color = v; window.elementSdk.setConfig({ accent_color: v }); } },
+      { get: () => config.sidebar_color || defaultConfig.sidebar_color, set: v => { config.sidebar_color = v; window.elementSdk.setConfig({ sidebar_color: v }); } }
+    ],
+    borderables: [],
+    fontEditable: { get: () => config.font_family || defaultConfig.font_family || '', set: v => { config.font_family = v; window.elementSdk.setConfig({ font_family: v }); } },
+    fontSizeable: { get: () => config.font_size || 14, set: v => { config.font_size = v; window.elementSdk.setConfig({ font_size: v }); } }
+  }),
+  mapToEditPanelValues: (config) => new Map([
+    ['app_title', config.app_title || defaultConfig.app_title],
+    ['company_name', config.company_name || defaultConfig.company_name]
+  ])
+});
+
+// Data SDK
+const dataHandler = {
+  onDataChanged(data) {
+    allEmployees = data.filter(d => d.type === 'employee');
+    allUsers = data.filter(d => d.type === 'admin');
+    allTrainings = data.filter(d => d.type === 'training');
+    renderAll();
+  }
+};
+
+(async () => {
+  const r = await window.dataSdk.init(dataHandler);
+  if (!r.isOk) console.error('Data SDK init failed');
+})();
+
+// Navigation
+function navigate(page) {
+  currentPage = page;
+  document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+  const el = document.getElementById('page-' + page);
+  if (el) { el.classList.remove('hidden'); el.classList.add('fade-in'); }
+
+  document.querySelectorAll('[data-nav]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.nav === page);
+  });
+
+  const titles = { dashboard:'Dashboard', employees:'Database Karyawan', organization:'Struktur Organisasi', attendance:'Kehadiran', leave:'Cuti & Lembur', payroll:'Penggajian & Pajak', recruitment:'Rekrutmen', performance:'Kinerja', learning:'Pelatihan', analytics:'HR Analytics', assets:'Manajemen Aset' };
+  document.getElementById('page-title').textContent = titles[page] || 'Dashboard';
+  lucide.createIcons();
+}
+
+// Employee CRUD
+function openEmployeeModal(emp) {
+  document.getElementById('emp-modal').classList.remove('hidden');
+  document.getElementById('emp-form').reset();
+  document.getElementById('emp-edit-id').value = '';
+  document.getElementById('modal-title').textContent = 'Tambah Karyawan Baru';
+  document.getElementById('emp-submit-btn').textContent = 'Simpan Karyawan';
+
+  if (emp) {
+    document.getElementById('modal-title').textContent = 'Edit Karyawan';
+    document.getElementById('emp-submit-btn').textContent = 'Update Karyawan';
+    document.getElementById('emp-edit-id').value = emp.__backendId;
+    document.getElementById('emp-name').value = emp.name || '';
+    document.getElementById('emp-email').value = emp.email || '';
+    document.getElementById('emp-phone').value = emp.phone || '';
+    document.getElementById('emp-dept').value = emp.department || '';
+    document.getElementById('emp-position').value = emp.position || '';
+    document.getElementById('emp-status').value = emp.status || 'Aktif';
+    document.getElementById('emp-join').value = emp.join_date || '';
+    document.getElementById('emp-salary').value = emp.salary || '';
+    document.getElementById('emp-notes').value = emp.notes || '';
+  }
+  lucide.createIcons();
+}
+
+function closeEmployeeModal() { document.getElementById('emp-modal').classList.add('hidden'); }
+
+async function handleEmployeeSubmit(e) {
+  e.preventDefault();
+  const btn = document.getElementById('emp-submit-btn');
+  btn.disabled = true; btn.textContent = 'Menyimpan...';
+
+  const data = {
+    type: 'employee',
+    name: document.getElementById('emp-name').value,
+    email: document.getElementById('emp-email').value,
+    phone: document.getElementById('emp-phone').value || '',
+    department: document.getElementById('emp-dept').value,
+    position: document.getElementById('emp-position').value,
+    status: document.getElementById('emp-status').value,
+    join_date: document.getElementById('emp-join').value || '',
+    salary: parseFloat(document.getElementById('emp-salary').value) || 0,
+    leave_balance: 12,
+    notes: document.getElementById('emp-notes').value || '',
+    created_at: new Date().toISOString()
+  };
+
+  const editId = document.getElementById('emp-edit-id').value;
+  let result;
+
+  if (editId) {
+    const existing = allEmployees.find(e => e.__backendId === editId);
+    if (existing) {
+      result = await window.dataSdk.update({ ...existing, ...data });
+    }
+  } else {
+    if (allEmployees.length >= 999) { showToast('Batas 999 data tercapai!'); btn.disabled = false; btn.textContent = 'Simpan Karyawan'; return; }
+    result = await window.dataSdk.create(data);
+  }
+
+  if (result && result.isOk) { showToast(editId ? 'Karyawan diperbarui' : 'Karyawan ditambahkan'); closeEmployeeModal(); }
+  else { showToast('Gagal menyimpan data'); }
+
+  btn.disabled = false; btn.textContent = editId ? 'Update Karyawan' : 'Simpan Karyawan';
+}
+
+function openDeleteConfirm(item, type) {
+  deleteTarget = item;
+  deleteType = type;
+  const msg = type === 'employee' ? 'Data karyawan akan dihapus permanen dan tidak dapat dikembalikan.' : 'Data pelatihan akan dihapus permanen dan tidak dapat dikembalikan.';
+  document.getElementById('delete-msg').textContent = msg;
+  document.getElementById('delete-confirm').classList.remove('hidden');
+}
+function closeDeleteConfirm() { document.getElementById('delete-confirm').classList.add('hidden'); deleteTarget = null; deleteType = null; }
+
+async function confirmDelete() {
+  if (!deleteTarget || !deleteType) return;
+  const btn = document.getElementById('delete-btn');
+  btn.disabled = true; btn.textContent = 'Menghapus...';
+  const result = await window.dataSdk.delete(deleteTarget);
+  if (result.isOk) showToast(deleteType === 'employee' ? 'Karyawan dihapus' : 'Pelatihan dihapus');
+  else showToast('Gagal menghapus');
+  btn.disabled = false; btn.textContent = 'Hapus';
+  closeDeleteConfirm();
+}
+
+// Render
+function renderAll() {
+  renderDashboard();
+  renderEmployeeTable();
+  renderOrganization();
+  renderPayroll();
+  renderAnalytics();
+  renderAttendance();
+  renderTrainings();
+}
+
+function renderDashboard() {
+  const active = allEmployees.filter(e => e.status !== 'Resign');
+  document.getElementById('stat-total').textContent = active.length;
+  document.getElementById('stat-present').textContent = Math.floor(active.length * 0.85);
+
+  // Dept chart
+  const deptChart = document.getElementById('dept-chart');
+  const deptEmpty = document.getElementById('dept-empty');
+  const depts = {};
+  active.forEach(e => { depts[e.department] = (depts[e.department] || 0) + 1; });
+  const colors = { Engineering:'bg-indigo-500', HR:'bg-cyan-500', Finance:'bg-amber-500', Marketing:'bg-emerald-500', Operations:'bg-rose-500', Sales:'bg-violet-500' };
+
+  if (Object.keys(depts).length === 0) { deptChart.innerHTML = ''; deptEmpty.classList.remove('hidden'); }
+  else {
+    deptEmpty.classList.add('hidden');
+    const max = Math.max(...Object.values(depts));
+    deptChart.innerHTML = Object.entries(depts).map(([d, c]) =>
+      `<div class="flex items-center gap-3"><span class="text-xs text-slate-600 w-24 text-right">${d}</span><div class="flex-1 bg-slate-100 rounded-full h-5 overflow-hidden"><div class="${colors[d] || 'bg-indigo-500'} h-full rounded-full progress-bar flex items-center justify-end pr-2" style="width:${(c/max)*100}%"><span class="text-xs text-white font-medium">${c}</span></div></div></div>`
+    ).join('');
+  }
+
+  // Recent activity
+  const recent = document.getElementById('recent-activity');
+  const sorted = [...allEmployees].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5);
+  if (sorted.length === 0) { recent.innerHTML = '<p class="text-sm text-slate-400 text-center py-8">Belum ada aktivitas</p>'; }
+  else {
+    recent.innerHTML = sorted.map(e =>
+      `<div class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50"><div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600">${(e.name||'?')[0]}</div><div class="flex-1 min-w-0"><p class="text-sm font-medium text-slate-800 truncate">${e.name}</p><p class="text-xs text-slate-500">${e.department} • ${e.position}</p></div></div>`
+    ).join('');
+  }
+}
+
+function renderEmployeeTable() {
+  const search = (document.getElementById('emp-search')?.value || '').toLowerCase();
+  const deptFilter = document.getElementById('emp-dept-filter')?.value || '';
+  let filtered = allEmployees.filter(e => {
+    const matchSearch = !search || (e.name||'').toLowerCase().includes(search) || (e.position||'').toLowerCase().includes(search);
+    const matchDept = !deptFilter || e.department === deptFilter;
+    return matchSearch && matchDept;
+  });
+
+  const tbody = document.getElementById('emp-table-body');
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-slate-400">Belum ada data karyawan</td></tr>';
+    return;
+  }
+
+  const statusColors = { Aktif:'bg-green-100 text-green-700', Kontrak:'bg-amber-100 text-amber-700', Probation:'bg-blue-100 text-blue-700', Resign:'bg-red-100 text-red-700' };
+
+  tbody.innerHTML = filtered.map(e =>
+    `<tr class="border-t border-slate-100 hover:bg-slate-50">
+      <td class="px-4 py-3"><div class="flex items-center gap-2"><div class="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600">${(e.name||'?')[0]}</div><div><p class="font-medium text-slate-800">${e.name}</p><p class="text-xs text-slate-500">${e.email}</p></div></div></td>
+      <td class="px-4 py-3 text-slate-600">${e.department}</td>
+      <td class="px-4 py-3 text-slate-600">${e.position}</td>
+      <td class="px-4 py-3"><span class="text-xs px-2 py-1 rounded-full ${statusColors[e.status]||'bg-slate-100 text-slate-600'}">${e.status}</span></td>
+      <td class="px-4 py-3 text-slate-600">${e.join_date || '-'}</td>
+      <td class="px-4 py-3"><div class="flex gap-1"><button onclick='openEmployeeModal(${JSON.stringify(e).replace(/'/g,"&#39;")})' class="p-1.5 hover:bg-slate-100 rounded text-slate-500"><i data-lucide="edit" class="w-4 h-4"></i></button><button onclick='openDeleteConfirm(${JSON.stringify(e).replace(/'/g,"&#39;")}, "employee")' class="p-1.5 hover:bg-red-50 rounded text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></td>
+    </tr>`
+  ).join('');
+  lucide.createIcons();
+}
+
+function filterEmployees() { renderEmployeeTable(); }
+
+function renderOrganization() {
+  const deptMap = {};
+  allEmployees.filter(e => e.status !== 'Resign').forEach(e => { deptMap[e.department] = (deptMap[e.department] || 0) + 1; });
+  const ids = { Engineering:'org-engineering', HR:'org-hr', Finance:'org-finance', Marketing:'org-marketing', Operations:'org-operations', Sales:'org-sales' };
+  Object.entries(ids).forEach(([dept, id]) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = `${deptMap[dept] || 0} karyawan`;
+  });
+}
+
+function renderPayroll() {
+  const active = allEmployees.filter(e => e.status !== 'Resign' && e.salary > 0);
+  const total = active.reduce((s, e) => s + (e.salary || 0), 0);
+  document.getElementById('payroll-total').textContent = 'Rp ' + total.toLocaleString('id-ID');
+  const payrollList = document.getElementById('payroll-list');
+  const payrollEmpty = document.getElementById('payroll-empty');
+  if (active.length === 0) { payrollList.innerHTML = ''; payrollEmpty.classList.remove('hidden'); }
+  else {
+    payrollEmpty.classList.add('hidden');
+    payrollList.innerHTML = active.slice(0, 10).map(e => {
+      const pph = Math.round(e.salary * 0.05);
+      const bpjs = Math.round(e.salary * 0.04);
+      const net = e.salary - pph - bpjs;
+      return `<div class="flex items-center justify-between py-3 border-b border-slate-100 last:border-0">
+        <div class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600">${(e.name||'?')[0]}</div><div><p class="text-sm font-medium text-slate-800">${e.name}</p><p class="text-xs text-slate-500">${e.position}</p></div></div>
+        <div class="text-right"><p class="text-sm font-semibold text-slate-800">Rp ${net.toLocaleString('id-ID')}</p><p class="text-xs text-slate-500">PPh: ${pph.toLocaleString('id-ID')} | BPJS: ${bpjs.toLocaleString('id-ID')}</p></div>
+      </div>`;
+    }).join('');
+  }
+}
+
+function renderAnalytics() {
+  const active = allEmployees.filter(e => e.status !== 'Resign');
+  const half = Math.ceil(active.length / 2);
+  document.getElementById('demo-male').textContent = half;
+  document.getElementById('demo-female').textContent = active.length - half;
+  document.getElementById('demo-permanent').textContent = active.filter(e => e.status === 'Aktif').length;
+  document.getElementById('demo-contract').textContent = active.filter(e => e.status === 'Kontrak').length;
+}
+
+function renderAttendance() {
+  const active = allEmployees.filter(e => e.status !== 'Resign');
+  const log = document.getElementById('attendance-log');
+  if (active.length === 0) { log.innerHTML = '<p class="text-sm text-slate-400 text-center py-6">Data kehadiran akan muncul saat karyawan melakukan clock-in</p>'; return; }
+  log.innerHTML = active.slice(0, 8).map(e => {
+    const h = 7 + Math.floor(Math.random() * 2);
+    const m = Math.floor(Math.random() * 60);
+    const time = `0${h}`.slice(-2) + ':' + `0${m}`.slice(-2);
+    const late = h >= 8 && m > 15;
+    return `<div class="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50">
+      <div class="flex items-center gap-3"><div class="w-7 h-7 rounded-full bg-green-100 flex items-center justify-center"><i data-lucide="check" class="w-3 h-3 text-green-600"></i></div><div><p class="text-sm font-medium text-slate-800">${e.name}</p><p class="text-xs text-slate-500">${e.department}</p></div></div>
+      <div class="text-right"><p class="text-sm font-medium ${late ? 'text-amber-600' : 'text-green-600'}">${time}</p><p class="text-xs ${late ? 'text-amber-500' : 'text-green-500'}">${late ? 'Terlambat' : 'Tepat Waktu'}</p></div>
+    </div>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  toast.classList.remove('hidden');
+  setTimeout(() => toast.classList.add('hidden'), 2500);
+}
+
+// Training Management
+function openTrainingModal(training) {
+  document.getElementById('training-modal').classList.remove('hidden');
+  document.getElementById('training-form').reset();
+  document.getElementById('training-edit-id').value = '';
+  document.getElementById('training-modal-title').textContent = 'Tambah Pelatihan';
+  document.getElementById('training-submit-btn').textContent = 'Simpan Pelatihan';
+
+  if (training) {
+    document.getElementById('training-modal-title').textContent = 'Edit Pelatihan';
+    document.getElementById('training-submit-btn').textContent = 'Update Pelatihan';
+    document.getElementById('training-edit-id').value = training.__backendId;
+    document.getElementById('training-name').value = training.training_name || '';
+    document.getElementById('training-category').value = training.training_category || '';
+    document.getElementById('training-modules').value = training.training_modules || '';
+    document.getElementById('training-hours').value = training.training_hours || '';
+    document.getElementById('training-description').value = training.training_description || '';
+  }
+  lucide.createIcons();
+}
+
+function closeTrainingModal() { document.getElementById('training-modal').classList.add('hidden'); }
+
+async function handleTrainingSubmit(e) {
+  e.preventDefault();
+  const btn = document.getElementById('training-submit-btn');
+  btn.disabled = true; btn.textContent = 'Menyimpan...';
+
+  const data = {
+    type: 'training',
+    training_name: document.getElementById('training-name').value,
+    training_category: document.getElementById('training-category').value,
+    training_modules: parseInt(document.getElementById('training-modules').value) || 0,
+    training_hours: parseInt(document.getElementById('training-hours').value) || 0,
+    training_description: document.getElementById('training-description').value || '',
+    created_at: new Date().toISOString()
+  };
+
+  const editId = document.getElementById('training-edit-id').value;
+  let result;
+
+  if (editId) {
+    const existing = allTrainings.find(t => t.__backendId === editId);
+    if (existing) {
+      result = await window.dataSdk.update({ ...existing, ...data });
+    }
+  } else {
+    if (allTrainings.length >= 999) { showToast('Batas 999 data tercapai!'); btn.disabled = false; btn.textContent = 'Simpan Pelatihan'; return; }
+    result = await window.dataSdk.create(data);
+  }
+
+  if (result && result.isOk) { showToast(editId ? 'Pelatihan diperbarui' : 'Pelatihan ditambahkan'); closeTrainingModal(); }
+  else { showToast('Gagal menyimpan pelatihan'); }
+
+  btn.disabled = false; btn.textContent = editId ? 'Update Pelatihan' : 'Simpan Pelatihan';
+}
+
+function renderTrainings() {
+  const grid = document.getElementById('training-grid');
+  if (allTrainings.length === 0) {
+    grid.innerHTML = '<p class="text-sm text-slate-400 text-center py-8 col-span-full">Belum ada pelatihan. Tambahkan pelatihan baru untuk memulai.</p>';
+    return;
+  }
+
+  const categoryColors = {
+    'Technical': 'from-indigo-400 to-purple-500',
+    'Soft Skills': 'from-cyan-400 to-blue-500',
+    'Leadership': 'from-amber-400 to-orange-500',
+    'Compliance': 'from-rose-400 to-pink-500',
+    'Personal Development': 'from-emerald-400 to-teal-500'
+  };
+
+  const categoryIcons = {
+    'Technical': 'code',
+    'Soft Skills': 'users',
+    'Leadership': 'briefcase',
+    'Compliance': 'shield',
+    'Personal Development': 'target'
+  };
+
+  grid.innerHTML = allTrainings.map(t => {
+    const color = categoryColors[t.training_category] || 'from-slate-400 to-slate-500';
+    const icon = categoryIcons[t.training_category] || 'book-open';
+    return `<div class="bg-white rounded-xl border border-slate-200 p-5 card-hover fade-in">
+      <div class="w-full h-28 bg-gradient-to-br ${color} rounded-lg mb-4 flex items-center justify-center"><i data-lucide="${icon}" class="w-10 h-10 text-white"></i></div>
+      <h4 class="font-semibold text-sm text-slate-800 line-clamp-2">${t.training_name}</h4>
+      <p class="text-xs text-slate-500 mt-1"><span class="inline-block bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded">${t.training_category}</span></p>
+      <p class="text-xs text-slate-500 mt-2">${t.training_modules} modul • ${t.training_hours} jam</p>
+      <p class="text-xs text-slate-600 mt-2 line-clamp-2">${t.training_description || 'Tidak ada deskripsi'}</p>
+      <div class="flex gap-2 mt-4">
+        <button onclick='openTrainingModal(${JSON.stringify(t).replace(/'/g,"&#39;")})' class="flex-1 flex items-center justify-center gap-1 px-3 py-2 text-sm text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg">
+          <i data-lucide="edit" class="w-4 h-4"></i> Edit
+        </button>
+        <button onclick='openDeleteConfirm(${JSON.stringify(t).replace(/'/g,"&#39;")}, "training")' class="flex-1 flex items-center justify-center gap-1 px-3 py-2 text-sm text-red-600 bg-red-50 hover:bg-red-100 rounded-lg">
+          <i data-lucide="trash-2" class="w-4 h-4"></i> Hapus
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+  lucide.createIcons();
+}
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9ee96f6fb4050519',t:'MTc3NjU3NTc2Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
