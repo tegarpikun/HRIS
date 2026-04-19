@@ -896,21 +896,43 @@ async function handleLogin(e) {
   const username = document.getElementById('login-username').value;
   const password = document.getElementById('login-password').value;
   const errorDiv = document.getElementById('login-error');
+  const loginBtn = document.getElementById('login-btn');
 
-  // Check against all users
-  const user = allUsers.find(u => (u.username === username || u.user_email === username) && u.password === password);
+  // GANTI INI dengan URL Web App dari Google Apps Script Anda (Langkah 2)
+  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzkFMoJwidn4xv3F1FD4pI8tTkKfP0X5ELFIxTIWHwxTmSE_ksZJL85WfliEu1f7_YC/exec";
 
-  if (user) {
-    currentUser = user;
-    localStorage.setItem('hris_user', JSON.stringify(user));
-    document.getElementById('login-btn').textContent = 'Masuk...';
-    setTimeout(() => {
-      document.getElementById('login-btn').textContent = 'Masuk';
-      showDashboard();
-    }, 500);
-  } else {
-    errorDiv.textContent = 'Username/Email atau password salah!';
+  loginBtn.textContent = 'Menghubungkan...';
+  loginBtn.disabled = true;
+
+  try {
+    // 1. Ambil data user terbaru dari Google Sheets
+    // Kita memanggil URL dengan parameter action=getUsers
+    const response = await fetch(`${WEB_APP_URL}?action=getUsers`);
+    const allUsersFromSheet = await response.json();
+
+    // 2. Cek kecocokan data
+    const user = allUsersFromSheet.find(u => 
+      (u.username === username || u.user_email === username) && u.password === password
+    );
+
+    if (user) {
+      currentUser = user;
+      localStorage.setItem('hris_user', JSON.stringify(user));
+      loginBtn.textContent = 'Berhasil Masuk!';
+      
+      setTimeout(() => {
+        loginBtn.textContent = 'Masuk';
+        loginBtn.disabled = false;
+        showDashboard();
+      }, 500);
+    } else {
+      throw new Error('Username atau password salah!');
+    }
+  } catch (error) {
+    errorDiv.textContent = error.message || 'Gagal terhubung ke database!';
     errorDiv.classList.remove('hidden');
+    loginBtn.textContent = 'Masuk';
+    loginBtn.disabled = false;
   }
 }
 
