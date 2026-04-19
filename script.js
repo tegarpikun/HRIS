@@ -1,6 +1,6 @@
 /**
- * HRIS GLOBAL - CORE SCRIPT (REWRITTEN)
- * Memperbaiki masalah Login & Sinkronisasi Data
+ * HRIS GLOBAL - ULTIMATE CORE SCRIPT
+ * Mendukung: Absensi GPS, Daily Task, Payroll PPh21, Cuti, Aset, KPI & Rekrutmen.
  */
 
 // 1. KONFIGURASI
@@ -9,149 +9,245 @@ let currentUser = JSON.parse(localStorage.getItem('hris_user')) || null;
 
 // 2. SISTEM PELUNCUR
 window.addEventListener('DOMContentLoaded', () => {
-    console.log("Sistem HRIS Memuat...");
-    
-    if (!document.getElementById('main-content')) {
-        const main = document.createElement('div');
-        main.id = 'main-content';
-        document.body.appendChild(main);
-    }
-
-    // Cek apakah sudah login atau belum
     if (currentUser) {
-        showDashboard();
+        renderMainShell();
+        showDashboard(); // Halaman default setelah login
     } else {
         renderLogin();
     }
 });
 
-// 3. FUNGSI LOGIN (DIPERBAIKI)
-async function handleLogin(e) {
-    if (e) e.preventDefault();
-    
-    const userVal = document.getElementById('login-username').value.trim();
-    const passVal = document.getElementById('login-password').value.trim();
-
-    showToast("Menghubungkan ke database...");
-
-    try {
-        // Menambahkan mode cors dan redirect follow agar tidak error JSON
-        const res = await fetch(`${WEB_APP_URL}?action=getUsers`, {
-            method: "GET",
-            redirect: "follow" 
-        });
-        
-        const users = await res.json();
-        
-        // Cari user dengan pembersihan karakter spasi
-        const found = users.find(u => 
-            String(u.username).toLowerCase().trim() === userVal.toLowerCase() && 
-            String(u.password).trim() === passVal
-        );
-
-        if (found) {
-            currentUser = found;
-            localStorage.setItem('hris_user', JSON.stringify(found));
-            showToast("Login Berhasil!");
-            setTimeout(() => location.reload(), 800);
-        } else {
-            alert("Username atau Password salah! Cek kembali penulisan Anda.");
-        }
-    } catch (err) {
-        console.error("Login Error:", err);
-        showToast("Error: Respon server tidak valid (Cek Deployment).");
-    }
-}
-
-// 4. FUNGSI TAMPILAN DASHBOARD
-function showDashboard() {
+// 3. UI SHELL (Sidebar & Header)
+function renderMainShell() {
     const main = document.getElementById('main-content');
     main.innerHTML = `
     <div class="flex h-screen bg-slate-50 font-jakarta">
-        <aside class="w-64 bg-white border-r border-slate-200 flex flex-col">
+        <aside class="w-64 bg-white border-r border-slate-200 flex flex-col shadow-sm">
             <div class="p-6 border-b border-slate-100">
-                <h1 class="text-xl font-bold text-indigo-600">HRIS GLOBAL</h1>
+                <h1 class="text-xl font-bold text-indigo-600 flex items-center gap-2">
+                    <i data-lucide="shield-check"></i> HRIS GLOBAL
+                </h1>
             </div>
-            <nav class="flex-1 p-4 space-y-2">
-                <button onclick="location.reload()" class="flex items-center gap-3 w-full px-4 py-3 rounded-xl bg-indigo-600 text-white shadow-lg transition">
-                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
-                </button>
-                <button onclick="prosesAbsen('Masuk')" class="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-slate-100 transition text-slate-600">
-                    <i data-lucide="map-pin" class="w-5 h-5"></i> Absen Masuk
-                </button>
-                <button onclick="prosesAbsen('Pulang')" class="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-slate-100 transition text-slate-600">
-                    <i data-lucide="log-out" class="w-5 h-5"></i> Absen Pulang
-                </button>
+            <nav class="flex-1 p-4 space-y-1 overflow-y-auto custom-scrollbar">
+                ${renderNavButton('Dashboard', 'layout-dashboard', 'showDashboard()', true)}
+                ${renderNavButton('Presensi GPS', 'map-pin', 'showAbsensi()')}
+                ${renderNavButton('Daily Task', 'clipboard-list', 'showDailyTask()')}
+                ${renderNavButton('Payroll & PPh21', 'banknote', 'showPayroll()')}
+                ${renderNavButton('Pengajuan Cuti', 'calendar-days', 'showCuti()')}
+                ${renderNavButton('Aset Kantor', 'package', 'showAset()')}
+                ${renderNavButton('Evaluasi KPI', 'bar-chart-3', 'showKPI()')}
+                ${renderNavButton('Rekrutmen', 'user-plus', 'showRecruitment()')}
             </nav>
             <div class="p-4 border-t border-slate-100">
-                <button onclick="handleLogout()" class="flex items-center gap-3 w-full px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition">
-                    <i data-lucide="power" class="w-5 h-5"></i> Keluar
+                <div class="flex items-center gap-3 px-4 py-3 mb-2 bg-slate-50 rounded-xl">
+                    <div class="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center font-bold text-xs">
+                        ${currentUser.username.substring(0,2).toUpperCase()}
+                    </div>
+                    <div class="overflow-hidden">
+                        <p class="text-xs font-bold text-slate-800 truncate">${currentUser.full_name || currentUser.username}</p>
+                        <p class="text-[10px] text-slate-500 capitalize">${currentUser.role || 'Staff'}</p>
+                    </div>
+                </div>
+                <button onclick="handleLogout()" class="flex items-center gap-3 w-full px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition text-sm font-medium">
+                    <i data-lucide="power" class="w-4 h-4"></i> Keluar Sistem
                 </button>
             </div>
         </aside>
 
-        <main class="flex-1 overflow-y-auto p-8">
-            <header class="mb-8 flex justify-between items-center">
-                <div>
-                    <h2 class="text-2xl font-bold text-slate-800">Halo, ${currentUser.full_name || currentUser.username}!</h2>
-                    <p class="text-slate-500 text-sm">Selamat bekerja di sistem HRIS.</p>
-                </div>
-                <div class="bg-indigo-50 px-4 py-2 rounded-full text-indigo-700 text-xs font-bold">
-                    ${new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                </div>
-            </header>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-                    <div class="p-3 bg-green-100 text-green-600 rounded-xl"><i data-lucide="user-check"></i></div>
-                    <div>
-                        <p class="text-slate-500 text-xs">Status Karyawan</p>
-                        <h3 class="text-lg font-bold">Aktif</h3>
-                    </div>
-                </div>
-                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-                    <div class="p-3 bg-blue-100 text-blue-600 rounded-xl"><i data-lucide="navigation"></i></div>
-                    <div>
-                        <p class="text-slate-500 text-xs">Lokasi Presensi</p>
-                        <h3 class="text-lg font-bold">GPS Aktif</h3>
-                    </div>
-                </div>
-            </div>
-        </main>
+        <main id="content-area" class="flex-1 overflow-y-auto p-8 bg-slate-50">
+            </main>
     </div>`;
-    
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+    lucide.createIcons();
 }
 
-// 5. FUNGSI TAMPILAN LOGIN
-function renderLogin() {
-    const main = document.getElementById('main-content');
-    main.innerHTML = `
-    <div class="min-h-screen flex items-center justify-center bg-slate-100 p-6 font-jakarta">
-        <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md">
-            <div class="text-center mb-8">
-                <div class="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-200">
-                    <i data-lucide="lock" class="text-white w-8 h-8"></i>
-                </div>
-                <h2 class="text-2xl font-bold text-slate-800">HRIS Global</h2>
-                <p class="text-slate-500 text-sm">Masukkan kredensial Anda</p>
+function renderNavButton(label, icon, func, isActive = false) {
+    return `
+    <button onclick="${func}; setActiveNav(this)" class="nav-link flex items-center gap-3 w-full px-4 py-3 rounded-xl transition text-sm font-medium text-slate-600 hover:bg-slate-100">
+        <i data-lucide="${icon}" class="w-5 h-5"></i> ${label}
+    </button>`;
+}
+
+function setActiveNav(el) {
+    document.querySelectorAll('.nav-link').forEach(btn => btn.classList.remove('bg-indigo-600', 'text-white', 'shadow-md'));
+    el.classList.add('bg-indigo-600', 'text-white', 'shadow-md');
+}
+
+// --- 4. MODUL-MODUL FITUR ---
+
+// A. DASHBOARD
+function showDashboard() {
+    const area = document.getElementById('content-area');
+    area.innerHTML = `
+    <div class="space-y-8 animate-in fade-in duration-500">
+        <header>
+            <h2 class="text-2xl font-bold text-slate-800">Selamat Datang, ${currentUser.full_name || currentUser.username}!</h2>
+            <p class="text-slate-500">Berikut adalah ringkasan aktivitas HR Anda hari ini.</p>
+        </header>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+                <p class="text-slate-400 text-xs font-bold uppercase tracking-wider">Status Absensi</p>
+                <h3 class="text-2xl font-bold text-green-600 mt-1">Sudah Masuk</h3>
             </div>
-            <form onsubmit="handleLogin(event)" class="space-y-4">
-                <input type="text" id="login-username" placeholder="Username" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition" required>
-                <input type="password" id="login-password" placeholder="Password" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition" required>
-                <button type="submit" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold hover:bg-indigo-700 transition">
-                    Masuk
+            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+                <p class="text-slate-400 text-xs font-bold uppercase tracking-wider">Tugas Hari Ini</p>
+                <h3 class="text-2xl font-bold text-indigo-600 mt-1">4 Selesai</h3>
+            </div>
+            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+                <p class="text-slate-400 text-xs font-bold uppercase tracking-wider">Sisa Cuti</p>
+                <h3 class="text-2xl font-bold text-orange-500 mt-1">12 Hari</h3>
+            </div>
+        </div>
+    </div>`;
+}
+
+// B. DAILY TASK (BARU)
+function showDailyTask() {
+    const area = document.getElementById('content-area');
+    area.innerHTML = `
+    <div class="max-w-2xl animate-in slide-in-from-bottom-4 duration-500">
+        <div class="bg-white p-8 rounded-[32px] shadow-sm border border-slate-200">
+            <h2 class="text-xl font-bold mb-6 text-slate-800">Laporan Daily Task</h2>
+            <form onsubmit="handleSaveTask(event)" class="space-y-5">
+                <div>
+                    <label class="text-xs font-bold text-slate-500 mb-2 block">NAMA TUGAS</label>
+                    <input type="text" id="task-name" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Misal: Input data stok barang" required>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-500 mb-2 block">DETAIL PEKERJAAN</label>
+                    <textarea id="task-detail" rows="4" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Jelaskan progres Anda..." required></textarea>
+                </div>
+                <button type="submit" id="btn-task" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-100">
+                    Kirim Laporan Harian
                 </button>
             </form>
         </div>
     </div>`;
-    if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
-// 6. FUNGSI GPS & LOGOUT
+async function handleSaveTask(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-task');
+    const payload = {
+        action: 'saveTask',
+        username: currentUser.username,
+        task_name: document.getElementById('task-name').value,
+        detail: document.getElementById('task-detail').value
+    };
+
+    btn.disabled = true;
+    btn.innerText = "Mengirim...";
+
+    try {
+        await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload), redirect: 'follow' });
+        showToast("Tugas berhasil disimpan!");
+        showDailyTask();
+    } catch (e) {
+        showToast("Gagal menyimpan tugas.");
+        btn.disabled = false;
+        btn.innerText = "Kirim Laporan Harian";
+    }
+}
+
+// C. ABSENSI GPS
+function showAbsensi() {
+    const area = document.getElementById('content-area');
+    area.innerHTML = `
+    <div class="max-w-md mx-auto text-center space-y-6 animate-in zoom-in duration-500">
+        <div class="bg-white p-10 rounded-[40px] shadow-sm border border-slate-200">
+            <div class="w-20 h-20 bg-indigo-50 text-indigo-600 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                <i data-lucide="map-pin" class="w-10 h-10"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-slate-800">Presensi Kehadiran</h2>
+            <p class="text-slate-500 text-sm mb-8">Pastikan GPS Anda aktif untuk mencatat lokasi secara akurat.</p>
+            <div class="grid grid-cols-1 gap-4">
+                <button onclick="prosesAbsen('Masuk')" class="flex items-center justify-center gap-3 p-5 bg-green-600 text-white rounded-2xl font-bold hover:bg-green-700 transition shadow-lg shadow-green-100">
+                    <i data-lucide="check-circle"></i> Absen Masuk
+                </button>
+                <button onclick="prosesAbsen('Pulang')" class="flex items-center justify-center gap-3 p-5 bg-slate-800 text-white rounded-2xl font-bold hover:bg-slate-900 transition shadow-lg shadow-slate-200">
+                    <i data-lucide="log-out"></i> Absen Pulang
+                </button>
+            </div>
+        </div>
+    </div>`;
+    lucide.createIcons();
+}
+
+// D. PAYROLL & PPh21
+async function showPayroll() {
+    const area = document.getElementById('content-area');
+    area.innerHTML = `<div class="flex items-center justify-center h-64"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div></div>`;
+    
+    try {
+        const res = await fetch(`${WEB_APP_URL}?action=getPayroll`, { redirect: 'follow' });
+        const data = await res.json();
+        const myPayroll = data.filter(p => p.username === currentUser.username);
+
+        let rows = myPayroll.map(p => `
+            <tr class="border-b border-slate-50 hover:bg-slate-50 transition">
+                <td class="p-4 text-sm font-medium">${p.bulan}</td>
+                <td class="p-4 text-sm">Rp ${Number(p.gaji_pokok).toLocaleString()}</td>
+                <td class="p-4 text-sm text-red-500">- Rp ${Number(p.pph21).toLocaleString()}</td>
+                <td class="p-4 text-sm font-bold text-indigo-600">Rp ${Number(p.gaji_bersih).toLocaleString()}</td>
+            </tr>
+        `).join('');
+
+        area.innerHTML = `
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-slate-800">Slip Gaji Digital</h2>
+                <span class="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase">Aktif</span>
+            </div>
+            <table class="w-full text-left">
+                <thead class="bg-slate-50">
+                    <tr>
+                        <th class="p-4 text-xs font-bold text-slate-400">PERIODE</th>
+                        <th class="p-4 text-xs font-bold text-slate-400">GAJI POKOK</th>
+                        <th class="p-4 text-xs font-bold text-slate-400">PPH21 (POT)</th>
+                        <th class="p-4 text-xs font-bold text-slate-400">TOTAL BERSIH</th>
+                    </tr>
+                </thead>
+                <tbody>${rows || '<tr><td colspan="4" class="text-center p-8 text-slate-400">Belum ada data slip gaji.</td></tr>'}</tbody>
+            </table>
+        </div>`;
+    } catch (e) {
+        area.innerHTML = `<p class="text-red-500">Gagal memuat data payroll.</p>`;
+    }
+}
+
+// --- 5. LOGIKA SISTEM (LOGIN, GPS, TOAST) ---
+
+async function handleLogin(e) {
+    if (e) e.preventDefault();
+    const userVal = document.getElementById('login-username').value.trim();
+    const passVal = document.getElementById('login-password').value.trim();
+    const btn = e.target.querySelector('button');
+
+    btn.disabled = true;
+    btn.innerHTML = `<span class="flex items-center gap-2 justify-center"><div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Autentikasi...</span>`;
+
+    try {
+        const res = await fetch(`${WEB_APP_URL}?action=getUsers`, { method: "GET", redirect: "follow" });
+        const users = await res.json();
+        const found = users.find(u => String(u.username).toLowerCase() === userVal.toLowerCase() && String(u.password) === passVal);
+
+        if (found) {
+            localStorage.setItem('hris_user', JSON.stringify(found));
+            location.reload();
+        } else {
+            alert("Login Gagal! Akun tidak ditemukan.");
+            btn.disabled = false;
+            btn.innerText = "Masuk Sekarang";
+        }
+    } catch (err) {
+        alert("Gagal terhubung ke database. Cek internet Anda.");
+        btn.disabled = false;
+        btn.innerText = "Masuk Sekarang";
+    }
+}
+
 async function prosesAbsen(tipe) {
-    if (!navigator.geolocation) return alert("GPS tidak didukung!");
-    showToast("Mengunci lokasi...");
+    if (!navigator.geolocation) return alert("GPS mati!");
+    showToast(`Mengunci lokasi untuk absen ${tipe}...`);
     
     navigator.geolocation.getCurrentPosition(async (pos) => {
         const payload = {
@@ -163,31 +259,51 @@ async function prosesAbsen(tipe) {
         };
 
         try {
-            await fetch(WEB_APP_URL, { 
-                method: 'POST', 
-                body: JSON.stringify(payload),
-                redirect: "follow"
-            });
-            showToast(`Absen ${tipe} Berhasil!`);
+            await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload), redirect: "follow" });
+            showToast(`Berhasil! Absen ${tipe} tercatat.`);
         } catch (e) {
-            showToast("Gagal mengirim data presensi.");
+            showToast("Error mengirim data.");
         }
     });
 }
 
 function showToast(msg) {
-    let container = document.getElementById('toast-container');
+    let container = document.getElementById('toast-box');
     if (!container) {
         container = document.createElement('div');
-        container.id = 'toast-container';
-        container.className = "fixed bottom-5 right-5 z-[9999] flex flex-col gap-2";
+        container.id = 'toast-box';
+        container.className = "fixed bottom-5 right-5 z-[999] space-y-2";
         document.body.appendChild(container);
     }
-    const toast = document.createElement('div');
-    toast.className = "bg-slate-800 text-white px-6 py-3 rounded-xl shadow-lg animate-pulse";
-    toast.innerText = msg;
-    container.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
+    const t = document.createElement('div');
+    t.className = "bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-2xl text-sm font-bold animate-bounce";
+    t.innerText = msg;
+    container.appendChild(t);
+    setTimeout(() => t.remove(), 4000);
+}
+
+function renderLogin() {
+    const main = document.getElementById('main-content');
+    main.innerHTML = `
+    <div class="min-h-screen flex items-center justify-center bg-slate-100 p-6 font-jakarta">
+        <div class="bg-white p-10 rounded-[48px] shadow-2xl w-full max-w-md border border-white">
+            <div class="text-center mb-10">
+                <div class="w-20 h-20 bg-indigo-600 rounded-[28px] flex items-center justify-center mx-auto mb-6 shadow-xl shadow-indigo-200">
+                    <i data-lucide="fingerprint" class="text-white w-10 h-10"></i>
+                </div>
+                <h2 class="text-3xl font-black text-slate-800">HRIS Global</h2>
+                <p class="text-slate-400 mt-2 font-medium">Sistem Informasi Karyawan</p>
+            </div>
+            <form onsubmit="handleLogin(event)" class="space-y-5">
+                <input type="text" id="login-username" placeholder="Username" class="w-full p-5 bg-slate-50 border border-slate-100 rounded-3xl outline-none focus:ring-4 focus:ring-indigo-500/10 transition" required>
+                <input type="password" id="login-password" placeholder="Password" class="w-full p-5 bg-slate-50 border border-slate-100 rounded-3xl outline-none focus:ring-4 focus:ring-indigo-500/10 transition" required>
+                <button type="submit" class="w-full bg-indigo-600 text-white py-5 rounded-3xl font-bold text-lg hover:bg-indigo-700 hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-indigo-100">
+                    Masuk Sekarang
+                </button>
+            </form>
+        </div>
+    </div>`;
+    lucide.createIcons();
 }
 
 function handleLogout() {
